@@ -1,22 +1,107 @@
+/**
+ * Represents an RGBA color with values stored as floats (0.0 to 1.0).
+ * This is the primary color type used throughout OpenTUI.
+ *
+ * @remarks
+ * RGBA stores colors using normalized float values (0.0-1.0) for better performance
+ * in the native rendering backend. The class provides multiple construction methods
+ * and utilities for color manipulation.
+ *
+ * @example
+ * ```ts
+ * // Create colors using various methods
+ * const red = RGBA.fromValues(1, 0, 0, 1)
+ * const blue = RGBA.fromInts(0, 0, 255)
+ * const green = RGBA.fromHex("#00ff00")
+ * const semi = RGBA.fromValues(1, 1, 1, 0.5)  // Semi-transparent white
+ *
+ * // Modify color components
+ * const color = RGBA.fromValues(1, 0, 0, 1)
+ * color.a = 0.5  // Make it semi-transparent
+ *
+ * // Convert to different formats
+ * const [r, g, b, a] = color.toInts()  // Get as 0-255 integers
+ * ```
+ *
+ * @public
+ */
 export class RGBA {
+  /** Internal buffer storing [r, g, b, a] as floats */
   buffer: Float32Array
 
   constructor(buffer: Float32Array) {
     this.buffer = buffer
   }
 
+  /**
+   * Creates an RGBA color from a Float32Array buffer.
+   *
+   * @param array - Float32Array containing [r, g, b, a] values (0.0-1.0)
+   * @returns A new RGBA instance
+   *
+   * @public
+   */
   static fromArray(array: Float32Array) {
     return new RGBA(array)
   }
 
+  /**
+   * Creates an RGBA color from normalized float values (0.0 to 1.0).
+   *
+   * @param r - Red component (0.0 to 1.0)
+   * @param g - Green component (0.0 to 1.0)
+   * @param b - Blue component (0.0 to 1.0)
+   * @param a - Alpha component (0.0 to 1.0, default: 1.0 = opaque)
+   * @returns A new RGBA instance
+   *
+   * @example
+   * ```ts
+   * const red = RGBA.fromValues(1, 0, 0, 1)
+   * const semiTransparentBlue = RGBA.fromValues(0, 0, 1, 0.5)
+   * ```
+   *
+   * @public
+   */
   static fromValues(r: number, g: number, b: number, a: number = 1.0) {
     return new RGBA(new Float32Array([r, g, b, a]))
   }
 
+  /**
+   * Creates an RGBA color from integer values (0 to 255).
+   *
+   * @param r - Red component (0 to 255)
+   * @param g - Green component (0 to 255)
+   * @param b - Blue component (0 to 255)
+   * @param a - Alpha component (0 to 255, default: 255 = opaque)
+   * @returns A new RGBA instance
+   *
+   * @example
+   * ```ts
+   * const red = RGBA.fromInts(255, 0, 0)
+   * const semiTransparent = RGBA.fromInts(128, 128, 128, 128)
+   * ```
+   *
+   * @public
+   */
   static fromInts(r: number, g: number, b: number, a: number = 255) {
     return new RGBA(new Float32Array([r / 255, g / 255, b / 255, a / 255]))
   }
 
+  /**
+   * Creates an RGBA color from a hexadecimal string.
+   *
+   * @param hex - Hex color string (with or without #, supports 3, 4, 6, or 8 digit formats)
+   * @returns A new RGBA instance
+   *
+   * @example
+   * ```ts
+   * const red = RGBA.fromHex("#ff0000")
+   * const shortRed = RGBA.fromHex("#f00")
+   * const withAlpha = RGBA.fromHex("#ff0000cc")
+   * ```
+   *
+   * @public
+   */
   static fromHex(hex: string): RGBA {
     return hexToRgb(hex)
   }
@@ -66,8 +151,32 @@ export class RGBA {
   }
 }
 
+/**
+ * Type representing color input - either a CSS color string or an RGBA instance.
+ *
+ * @public
+ */
 export type ColorInput = string | RGBA
 
+/**
+ * Converts a hexadecimal color string to an RGBA instance.
+ *
+ * @param hex - Hex color string (supports #RGB, #RGBA, #RRGGBB, #RRGGBBAA formats)
+ * @returns An RGBA color instance
+ *
+ * @remarks
+ * Automatically handles short and long formats, with or without the # prefix.
+ * Invalid hex strings default to magenta (#FF00FF) with a console warning.
+ *
+ * @example
+ * ```ts
+ * const red = hexToRgb("#ff0000")
+ * const shortGreen = hexToRgb("#0f0")
+ * const withAlpha = hexToRgb("#ff0000cc")
+ * ```
+ *
+ * @public
+ */
 export function hexToRgb(hex: string): RGBA {
   hex = hex.replace(/^#/, "")
 
@@ -181,6 +290,37 @@ const CSS_COLOR_NAMES: Record<string, string> = {
   brightwhite: "#FFFFFF",
 }
 
+/**
+ * Parses a color input string or returns an existing RGBA instance.
+ * Supports CSS color names, hex strings, and "transparent".
+ *
+ * @param color - Color string (CSS name, hex, or "transparent") or RGBA instance
+ * @returns An RGBA color instance
+ *
+ * @remarks
+ * Supports standard CSS color names (black, white, red, blue, etc.) and
+ * "bright" variants (brightred, brightblue, etc.). This is the recommended
+ * way to parse user-provided color strings.
+ *
+ * @example
+ * ```ts
+ * // CSS color names
+ * const red = parseColor("red")
+ * const brightBlue = parseColor("brightblue")
+ *
+ * // Hex strings
+ * const custom = parseColor("#ff6600")
+ *
+ * // Transparent
+ * const transparent = parseColor("transparent")
+ *
+ * // Pass-through RGBA
+ * const existing = RGBA.fromValues(1, 0, 0, 1)
+ * const same = parseColor(existing)  // Returns the same instance
+ * ```
+ *
+ * @public
+ */
 export function parseColor(color: ColorInput): RGBA {
   if (typeof color === "string") {
     const lowerColor = color.toLowerCase()

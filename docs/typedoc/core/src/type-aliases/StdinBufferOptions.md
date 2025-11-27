@@ -1,0 +1,18 @@
+[**opentui-dev**](../../../README.md)
+
+***
+
+[opentui-dev](../../../README.md) / [core/src](../README.md) / StdinBufferOptions
+
+# Type Alias: StdinBufferOptions
+
+> **StdinBufferOptions** = `object`
+
+## Properties
+
+### timeout?
+
+> `optional` **timeout**: `number`
+
+Maximum time to wait for sequence completion (default: 10ms)
+After this time, the buffer is flushed even if incomplete

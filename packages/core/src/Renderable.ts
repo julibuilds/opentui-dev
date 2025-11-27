@@ -35,97 +35,265 @@ import {
 
 const BrandedRenderable: unique symbol = Symbol.for("@opentui/core/Renderable")
 
+/**
+ * Events emitted by renderables related to layout changes.
+ *
+ * @public
+ */
 export enum LayoutEvents {
+  /** Fired when the layout has been recalculated */
   LAYOUT_CHANGED = "layout-changed",
+  /** Fired when a child is added to the renderable */
   ADDED = "added",
+  /** Fired when a child is removed from the renderable */
   REMOVED = "removed",
+  /** Fired when the renderable's size changes */
   RESIZED = "resized",
 }
 
+/**
+ * Events emitted by renderables related to focus state changes.
+ *
+ * @public
+ */
 export enum RenderableEvents {
+  /** Fired when the renderable gains focus */
   FOCUSED = "focused",
+  /** Fired when the renderable loses focus */
   BLURRED = "blurred",
 }
 
+/**
+ * Position configuration for absolute positioning.
+ * Values can be numbers (cell units), "auto", or percentage strings.
+ *
+ * @example
+ * ```ts
+ * // Absolute position 10 cells from top, 5 from left
+ * const pos: Position = { top: 10, left: 5 }
+ *
+ * // Position at 50% from top
+ * const centered: Position = { top: "50%" }
+ * ```
+ *
+ * @public
+ */
 export interface Position {
+  /** Distance from the top edge */
   top?: number | "auto" | `${number}%`
+  /** Distance from the right edge */
   right?: number | "auto" | `${number}%`
+  /** Distance from the bottom edge */
   bottom?: number | "auto" | `${number}%`
+  /** Distance from the left edge */
   left?: number | "auto" | `${number}%`
 }
 
+/**
+ * Base options for all renderables.
+ *
+ * @public
+ */
 export interface BaseRenderableOptions {
+  /** Optional unique identifier for the renderable */
   id?: string
 }
 
+/**
+ * Layout configuration options using Yoga (Flexbox) layout system.
+ * All renderables support these properties to control their layout behavior.
+ *
+ * @remarks
+ * OpenTUI uses the Yoga layout engine, which implements a subset of CSS Flexbox.
+ * Values can be numbers (cell units), "auto", or percentage strings.
+ *
+ * @example
+ * ```ts
+ * // Create a centered column layout
+ * const container = new BoxRenderable(ctx, {
+ *   flexDirection: "column",
+ *   alignItems: "center",
+ *   justifyContent: "center",
+ *   width: "100%",
+ *   height: "100%",
+ *   padding: 2
+ * })
+ *
+ * // Create a flex item that grows to fill space
+ * const item = new BoxRenderable(ctx, {
+ *   flexGrow: 1,
+ *   margin: 1
+ * })
+ * ```
+ *
+ * @public
+ */
 export interface LayoutOptions extends BaseRenderableOptions {
+  /** How much the item should grow relative to siblings (default: 0) */
   flexGrow?: number
+  /** How much the item should shrink relative to siblings (default: 1) */
   flexShrink?: number
+  /** Direction of flex items: "row", "column", "row-reverse", "column-reverse" */
   flexDirection?: FlexDirectionString
+  /** Whether flex items should wrap: "wrap", "nowrap", "wrap-reverse" */
   flexWrap?: WrapString
+  /** Align children along cross axis: "flex-start", "center", "flex-end", "stretch", "baseline" */
   alignItems?: AlignString
+  /** Align children along main axis: "flex-start", "center", "flex-end", "space-between", "space-around", "space-evenly" */
   justifyContent?: JustifyString
+  /** Override parent's alignItems for this item */
   alignSelf?: AlignString
+  /** Initial size before remaining space is distributed */
   flexBasis?: number | "auto" | undefined
+  /** Position type: "relative" (default) or "absolute" */
   position?: PositionTypeString
+  /** How overflow is handled: "visible", "hidden", "scroll" */
   overflow?: OverflowString
+  /** Position from top edge (requires position: "absolute") */
   top?: number | "auto" | `${number}%`
+  /** Position from right edge (requires position: "absolute") */
   right?: number | "auto" | `${number}%`
+  /** Position from bottom edge (requires position: "absolute") */
   bottom?: number | "auto" | `${number}%`
+  /** Position from left edge (requires position: "absolute") */
   left?: number | "auto" | `${number}%`
+  /** Minimum width constraint */
   minWidth?: number | "auto" | `${number}%`
+  /** Minimum height constraint */
   minHeight?: number | "auto" | `${number}%`
+  /** Maximum width constraint */
   maxWidth?: number | "auto" | `${number}%`
+  /** Maximum height constraint */
   maxHeight?: number | "auto" | `${number}%`
+  /** Margin on all sides */
   margin?: number | "auto" | `${number}%`
+  /** Margin on top edge */
   marginTop?: number | "auto" | `${number}%`
+  /** Margin on right edge */
   marginRight?: number | "auto" | `${number}%`
+  /** Margin on bottom edge */
   marginBottom?: number | "auto" | `${number}%`
+  /** Margin on left edge */
   marginLeft?: number | "auto" | `${number}%`
+  /** Padding on all sides */
   padding?: number | `${number}%`
+  /** Padding on top edge */
   paddingTop?: number | `${number}%`
+  /** Padding on right edge */
   paddingRight?: number | `${number}%`
+  /** Padding on bottom edge */
   paddingBottom?: number | `${number}%`
+  /** Padding on left edge */
   paddingLeft?: number | `${number}%`
+  /** Whether to enable layout calculation (default: true) */
   enableLayout?: boolean
 }
 
+/**
+ * Configuration options for creating a Renderable.
+ * Extends LayoutOptions with rendering and event handling capabilities.
+ *
+ * @typeParam T - The type of the renderable (for proper `this` binding in callbacks)
+ *
+ * @example
+ * ```ts
+ * // Create a basic renderable with size and event handling
+ * const box = new BoxRenderable(ctx, {
+ *   width: 40,
+ *   height: 10,
+ *   zIndex: 1,
+ *   visible: true,
+ *   onMouseDown: (event) => {
+ *     console.log("Box clicked at", event.x, event.y)
+ *   }
+ * })
+ *
+ * // Create a buffered renderable for performance
+ * const chart = new CustomRenderable(ctx, {
+ *   width: "100%",
+ *   height: 20,
+ *   buffered: true,  // Renders to offscreen buffer
+ *   renderBefore: function(buffer, deltaTime) {
+ *     // Custom drawing logic before default render
+ *   }
+ * })
+ * ```
+ *
+ * @public
+ */
 export interface RenderableOptions<T extends BaseRenderable = BaseRenderable> extends Partial<LayoutOptions> {
+  /** Width in cells, "auto", or percentage (e.g., "50%") */
   width?: number | "auto" | `${number}%`
+  /** Height in cells, "auto", or percentage (e.g., "50%") */
   height?: number | "auto" | `${number}%`
+  /** Stacking order - higher values render on top (default: 0) */
   zIndex?: number
+  /** Whether the renderable is visible (default: true) */
   visible?: boolean
+  /** Whether to use an offscreen buffer for rendering (improves performance for complex renderables) */
   buffered?: boolean
+  /** Whether to request continuous rendering (default: false) */
   live?: boolean
 
-  // hooks for custom render logic
+  /** Hook called before the renderable's render method */
   renderBefore?: (this: T, buffer: OptimizedBuffer, deltaTime: number) => void
+  /** Hook called after the renderable's render method */
   renderAfter?: (this: T, buffer: OptimizedBuffer, deltaTime: number) => void
 
-  // catch all
+  /** Catch-all handler for any mouse event */
   onMouse?: (this: T, event: MouseEvent) => void
 
+  /** Handler for mouse button press */
   onMouseDown?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse button release */
   onMouseUp?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse movement (without button pressed) */
   onMouseMove?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse drag (movement with button pressed) */
   onMouseDrag?: (this: T, event: MouseEvent) => void
+  /** Handler for end of mouse drag */
   onMouseDragEnd?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse drop (after drag) */
   onMouseDrop?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse entering the renderable's bounds */
   onMouseOver?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse leaving the renderable's bounds */
   onMouseOut?: (this: T, event: MouseEvent) => void
+  /** Handler for mouse scroll events */
   onMouseScroll?: (this: T, event: MouseEvent) => void
 
+  /** Handler for paste events (when renderable is focused) */
   onPaste?: (this: T, event: PasteEvent) => void
 
+  /** Handler for key press events (when renderable is focused) */
   onKeyDown?: (key: KeyEvent) => void
 
+  /** Handler called when the renderable's size changes */
   onSizeChange?: (this: T) => void
 }
 
+/**
+ * Type guard to check if an object is a Renderable.
+ *
+ * @param obj - Object to check
+ * @returns True if the object is a Renderable
+ *
+ * @public
+ */
 export function isRenderable(obj: any): obj is Renderable {
   return !!obj?.[BrandedRenderable]
 }
 
+/**
+ * Abstract base class for all renderables in OpenTUI.
+ * Provides the minimal interface for objects that can be part of the render tree.
+ *
+ * @remarks
+ * This class is typically not used directly. Use {@link Renderable} instead,
+ * which provides full layout and rendering capabilities.
+ *
+ * @public
+ */
 export abstract class BaseRenderable extends EventEmitter {
   [BrandedRenderable] = true
 
@@ -194,6 +362,48 @@ const yogaConfig: Config = Yoga.Config.create()
 yogaConfig.setUseWebDefaults(false)
 yogaConfig.setPointScaleFactor(1)
 
+/**
+ * Base class for all renderable components in OpenTUI.
+ * Provides layout (via Yoga/Flexbox), rendering, event handling, and focus management.
+ *
+ * @remarks
+ * Renderable is the core building block for creating terminal UIs. It provides:
+ * - **Flexbox Layout**: Full flexbox layout system via Yoga layout engine
+ * - **Event Handling**: Mouse, keyboard, and paste events
+ * - **Focus Management**: Focus and blur for keyboard input
+ * - **Z-Index Ordering**: Control rendering order with zIndex
+ * - **Buffering**: Offscreen rendering for performance optimization
+ * - **Parent-Child Hierarchy**: Tree-based composition
+ *
+ * All UI components (BoxRenderable, TextRenderable, etc.) extend this class.
+ *
+ * @example
+ * ```ts
+ * // Create a custom renderable
+ * class MyComponent extends Renderable {
+ *   constructor(ctx: RenderContext, options: RenderableOptions) {
+ *     super(ctx, options)
+ *   }
+ *
+ *   render(buffer: OptimizedBuffer, deltaTime: number): void {
+ *     // Custom rendering logic
+ *     buffer.drawText(this.x, this.y, "Hello!", RGBA.white())
+ *   }
+ * }
+ *
+ * // Use built-in renderables
+ * const root = new RootRenderable(ctx)
+ * const box = new BoxRenderable(ctx, {
+ *   width: 40,
+ *   height: 10,
+ *   flexDirection: "column",
+ *   padding: 2
+ * })
+ * root.add(box)
+ * ```
+ *
+ * @public
+ */
 export abstract class Renderable extends BaseRenderable {
   static renderablesByNumber: Map<number, Renderable> = new Map()
 
@@ -1495,6 +1705,38 @@ interface RenderCommandRender extends RenderCommandBase {
 
 export type RenderCommand = RenderCommandPushScissorRect | RenderCommandPopScissorRect | RenderCommandRender
 
+/**
+ * Root renderable that serves as the entry point for the render tree.
+ * Manages the top-level layout calculation and rendering process.
+ *
+ * @remarks
+ * RootRenderable is a special renderable that:
+ * - Acts as the root of the component tree
+ * - Manages the three-pass rendering process (layout, update, render)
+ * - Coordinates live rendering requests
+ * - Automatically resizes to match the terminal size
+ *
+ * Typically created once per application and passed to {@link CliRenderer}.
+ *
+ * @example
+ * ```ts
+ * const renderer = new CliRenderer({ fps: 60 })
+ * const ctx = renderer.getContext()
+ * const root = new RootRenderable(ctx)
+ *
+ * // Add your UI components to the root
+ * const app = new BoxRenderable(ctx, {
+ *   flexDirection: "column",
+ *   width: "100%",
+ *   height: "100%"
+ * })
+ * root.add(app)
+ *
+ * renderer.start(root)
+ * ```
+ *
+ * @public
+ */
 export class RootRenderable extends Renderable {
   private renderList: RenderCommand[] = []
 

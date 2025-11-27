@@ -41,29 +41,97 @@ class ContentRenderable extends BoxRenderable {
   }
 }
 
+/**
+ * Configuration options for {@link ScrollBoxRenderable}.
+ *
+ * @public
+ */
 export interface ScrollBoxOptions extends BoxOptions<ScrollBoxRenderable> {
+  /** Options for the root container element */
   rootOptions?: BoxOptions
+  /** Options for the wrapper element that contains viewport and horizontal scrollbar */
   wrapperOptions?: BoxOptions
+  /** Options for the viewport element that clips the content */
   viewportOptions?: BoxOptions
+  /** Options for the content container that holds child elements */
   contentOptions?: BoxOptions
+  /** Common scrollbar options applied to both vertical and horizontal scrollbars */
   scrollbarOptions?: Omit<ScrollBarOptions, "orientation">
+  /** Options specific to the vertical scrollbar */
   verticalScrollbarOptions?: Omit<ScrollBarOptions, "orientation">
+  /** Options specific to the horizontal scrollbar */
   horizontalScrollbarOptions?: Omit<ScrollBarOptions, "orientation">
+  /** Enable sticky scroll behavior (auto-scroll when content changes) */
   stickyScroll?: boolean
+  /** Initial sticky position when stickyScroll is enabled */
   stickyStart?: "bottom" | "top" | "left" | "right"
+  /** Enable horizontal scrolling */
   scrollX?: boolean
+  /** Enable vertical scrolling */
   scrollY?: boolean
+  /** Custom scroll acceleration for mouse wheel events */
   scrollAcceleration?: ScrollAcceleration
+  /** Enable viewport culling to skip rendering off-screen children */
   viewportCulling?: boolean
 }
 
+/**
+ * A scrollable container component with vertical and horizontal scrollbars.
+ *
+ * @remarks
+ * ScrollBoxRenderable provides a flexible scrolling container with the following features:
+ * - Vertical and horizontal scrolling with customizable scrollbars
+ * - Sticky scroll behavior (auto-scroll to top/bottom/left/right as content changes)
+ * - Auto-scroll during drag selection near edges
+ * - Viewport culling to improve performance by skipping off-screen children
+ * - Configurable scroll acceleration for mouse wheel events
+ * - Nested structure: root → wrapper → viewport → content
+ *
+ * The component consists of four main parts:
+ * - **wrapper**: Contains the viewport and horizontal scrollbar
+ * - **viewport**: Clips the content to the visible area
+ * - **content**: Container that holds all child elements
+ * - **scrollbars**: Vertical and horizontal scrollbars (auto-hide when not needed)
+ *
+ * @example
+ * ```typescript
+ * const scrollBox = new ScrollBoxRenderable(ctx, {
+ *   width: 40,
+ *   height: 20,
+ *   scrollY: true,
+ *   scrollX: true,
+ *   stickyScroll: true,
+ *   stickyStart: "bottom",
+ *   viewportCulling: true
+ * });
+ *
+ * // Add content
+ * for (let i = 0; i < 100; i++) {
+ *   scrollBox.add(new TextRenderable(ctx, {
+ *     content: `Line ${i}`
+ *   }));
+ * }
+ *
+ * // Programmatic scrolling
+ * scrollBox.scrollTo(100); // Scroll to position 100
+ * scrollBox.scrollBy(10); // Scroll down by 10 pixels
+ * ```
+ *
+ * @public
+ */
 export class ScrollBoxRenderable extends BoxRenderable {
   static idCounter = 0
   private internalId = 0
+
+  /** The wrapper element that contains the viewport and horizontal scrollbar */
   public readonly wrapper: BoxRenderable
+  /** The viewport element that clips the content to the visible area */
   public readonly viewport: BoxRenderable
+  /** The content container that holds all child elements */
   public readonly content: ContentRenderable
+  /** The horizontal scrollbar */
   public readonly horizontalScrollBar: ScrollBarRenderable
+  /** The vertical scrollbar */
   public readonly verticalScrollBar: ScrollBarRenderable
 
   protected _focusable: boolean = true
@@ -94,28 +162,61 @@ export class ScrollBoxRenderable extends BoxRenderable {
   private _isApplyingStickyScroll: boolean = false
   private scrollAccel: ScrollAcceleration
 
+  /**
+   * Gets whether sticky scroll is enabled.
+   *
+   * @public
+   */
   get stickyScroll(): boolean {
     return this._stickyScroll
   }
 
+  /**
+   * Sets whether sticky scroll is enabled.
+   * When enabled, the scroll position automatically follows content changes
+   * based on the {@link stickyStart} position.
+   *
+   * @public
+   */
   set stickyScroll(value: boolean) {
     this._stickyScroll = value
     this.updateStickyState()
   }
 
+  /**
+   * Gets the sticky scroll start position.
+   *
+   * @public
+   */
   get stickyStart(): "bottom" | "top" | "left" | "right" | undefined {
     return this._stickyStart
   }
 
+  /**
+   * Sets the sticky scroll start position.
+   * Determines which edge to stick to when {@link stickyScroll} is enabled.
+   *
+   * @public
+   */
   set stickyStart(value: "bottom" | "top" | "left" | "right" | undefined) {
     this._stickyStart = value
     this.updateStickyState()
   }
 
+  /**
+   * Gets the vertical scroll position in pixels.
+   *
+   * @public
+   */
   get scrollTop(): number {
     return this.verticalScrollBar.scrollPosition
   }
 
+  /**
+   * Sets the vertical scroll position in pixels.
+   *
+   * @public
+   */
   set scrollTop(value: number) {
     this.verticalScrollBar.scrollPosition = value
     if (!this._isApplyingStickyScroll) {
@@ -131,10 +232,20 @@ export class ScrollBoxRenderable extends BoxRenderable {
     this.updateStickyState()
   }
 
+  /**
+   * Gets the horizontal scroll position in pixels.
+   *
+   * @public
+   */
   get scrollLeft(): number {
     return this.horizontalScrollBar.scrollPosition
   }
 
+  /**
+   * Sets the horizontal scroll position in pixels.
+   *
+   * @public
+   */
   set scrollLeft(value: number) {
     this.horizontalScrollBar.scrollPosition = value
     if (!this._isApplyingStickyScroll) {
@@ -150,10 +261,20 @@ export class ScrollBoxRenderable extends BoxRenderable {
     this.updateStickyState()
   }
 
+  /**
+   * Gets the total scrollable width of the content.
+   *
+   * @public
+   */
   get scrollWidth(): number {
     return this.horizontalScrollBar.scrollSize
   }
 
+  /**
+   * Gets the total scrollable height of the content.
+   *
+   * @public
+   */
   get scrollHeight(): number {
     return this.verticalScrollBar.scrollSize
   }
@@ -346,6 +467,26 @@ export class ScrollBoxRenderable extends BoxRenderable {
     this.handleAutoScroll(deltaTime)
   }
 
+  /**
+   * Scrolls the content by a relative amount.
+   *
+   * @param delta - The amount to scroll (number for vertical, object for both axes)
+   * @param unit - The unit of measurement for the delta value
+   *
+   * @example
+   * ```typescript
+   * // Scroll down by 10 pixels
+   * scrollBox.scrollBy(10);
+   *
+   * // Scroll by half a viewport
+   * scrollBox.scrollBy(0.5, "viewport");
+   *
+   * // Scroll both axes
+   * scrollBox.scrollBy({ x: 10, y: 20 });
+   * ```
+   *
+   * @public
+   */
   public scrollBy(delta: number | { x: number; y: number }, unit: ScrollUnit = "absolute"): void {
     if (typeof delta === "number") {
       this.verticalScrollBar.scrollBy(delta, unit)
@@ -357,6 +498,22 @@ export class ScrollBoxRenderable extends BoxRenderable {
     // change will trigger the scrollTop setter which handles it
   }
 
+  /**
+   * Scrolls to an absolute position.
+   *
+   * @param position - The position to scroll to (number for vertical, object for both axes)
+   *
+   * @example
+   * ```typescript
+   * // Scroll to top
+   * scrollBox.scrollTo(0);
+   *
+   * // Scroll to specific position
+   * scrollBox.scrollTo({ x: 100, y: 200 });
+   * ```
+   *
+   * @public
+   */
   public scrollTo(position: number | { x: number; y: number }): void {
     if (typeof position === "number") {
       this.scrollTop = position

@@ -13,18 +13,37 @@ import { type ColorInput, RGBA, parseColor } from "../lib/RGBA"
 import { isValidPercentage } from "../lib/renderable.validations"
 import type { RenderContext } from "../types"
 
+/**
+ * Configuration options for BoxRenderable.
+ *
+ * @typeParam TRenderable - The type of the renderable (for proper `this` binding)
+ *
+ * @public
+ */
 export interface BoxOptions<TRenderable extends Renderable = BoxRenderable> extends RenderableOptions<TRenderable> {
+  /** Background color for the box interior */
   backgroundColor?: string | RGBA
+  /** Border style: "single", "double", "rounded", "bold", "ascii" */
   borderStyle?: BorderStyle
+  /** Which borders to draw (true for all, false for none, or array of sides) */
   border?: boolean | BorderSides[]
+  /** Border color */
   borderColor?: string | RGBA
+  /** Custom border characters (for custom border styles) */
   customBorderChars?: BorderCharacters
+  /** Whether to fill the box interior with background color (default: true) */
   shouldFill?: boolean
+  /** Optional title text displayed in the top border */
   title?: string
+  /** Title alignment: "left", "center", or "right" (default: "left") */
   titleAlignment?: "left" | "center" | "right"
+  /** Border color when the box is focused */
   focusedBorderColor?: ColorInput
+  /** Gap between child elements (applies to both row and column gaps) */
   gap?: number | `${number}%`
+  /** Gap between rows of children */
   rowGap?: number | `${number}%`
+  /** Gap between columns of children */
   columnGap?: number | `${number}%`
 }
 
@@ -38,6 +57,49 @@ function isGapType(value: any): value is number | undefined {
   return isValidPercentage(value)
 }
 
+/**
+ * A container renderable that displays a box with optional borders, background, and title.
+ * This is the most commonly used layout component in OpenTUI.
+ *
+ * @remarks
+ * BoxRenderable is a versatile container that provides:
+ * - **Borders**: Multiple styles (single, double, rounded, bold, ascii)
+ * - **Background**: Solid color fill
+ * - **Title**: Optional title text in the top border
+ * - **Flexbox Layout**: Full flexbox support for child positioning
+ * - **Gaps**: Row and column gaps between children
+ * - **Focus Styling**: Different border color when focused
+ *
+ * @example
+ * ```ts
+ * // Simple box with border
+ * const box = new BoxRenderable(ctx, {
+ *   width: 40,
+ *   height: 10,
+ *   border: true,
+ *   borderStyle: "rounded",
+ *   borderColor: "cyan",
+ *   backgroundColor: "black"
+ * })
+ *
+ * // Box with title and children
+ * const panel = new BoxRenderable(ctx, {
+ *   width: "50%",
+ *   height: "100%",
+ *   border: ["top", "bottom", "left", "right"],
+ *   title: "My Panel",
+ *   titleAlignment: "center",
+ *   flexDirection: "column",
+ *   padding: 2,
+ *   gap: 1
+ * })
+ *
+ * // Add child components
+ * panel.add(new TextRenderable(ctx, { content: "Hello!" }))
+ * ```
+ *
+ * @public
+ */
 export class BoxRenderable extends Renderable {
   protected _backgroundColor: RGBA
   protected _border: boolean | BorderSides[]

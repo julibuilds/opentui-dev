@@ -31,7 +31,12 @@ import type React from "react"
 // Core Type System
 // ============================================================================
 
-/** Properties that should not be included in the style prop */
+/**
+ * Properties that should not be included in the style prop.
+ *
+ * These properties affect behavior or rendering logic and should be passed
+ * directly to components rather than nested in the `style` prop.
+ */
 export type NonStyledProps =
   | "id"
   | "buffered"
@@ -42,19 +47,36 @@ export type NonStyledProps =
   | "renderBefore"
   | `on${string}`
 
-/** React-specific props for all components */
+/**
+ * React-specific props available on all OpenTUI components.
+ *
+ * @template TRenderable - The underlying renderable type for proper ref typing
+ */
 export type ReactProps<TRenderable = unknown> = {
+  /** React key for list reconciliation */
   key?: React.Key
+  /** React ref to access the underlying renderable instance */
   ref?: React.Ref<TRenderable>
 }
 
-/** Base type for any renderable constructor */
+/**
+ * Base type for any renderable constructor.
+ *
+ * All OpenTUI renderable classes match this signature, taking a render context
+ * and options object to construct a renderable instance.
+ *
+ * @template TRenderable - The specific renderable class type
+ */
 export type RenderableConstructor<TRenderable extends BaseRenderable = BaseRenderable> = new (
   ctx: RenderContext,
   options: any,
 ) => TRenderable
 
-/** Extract the options type from a renderable constructor */
+/**
+ * Extracts the options type from a renderable constructor.
+ *
+ * @internal
+ */
 type ExtractRenderableOptions<TConstructor> = TConstructor extends new (
   ctx: RenderContext,
   options: infer TOptions,
@@ -62,12 +84,23 @@ type ExtractRenderableOptions<TConstructor> = TConstructor extends new (
   ? TOptions
   : never
 
-/** Extract the renderable type from a constructor */
+/**
+ * Extracts the renderable instance type from a constructor.
+ *
+ * @internal
+ */
 type ExtractRenderable<TConstructor> = TConstructor extends new (ctx: RenderContext, options: any) => infer TRenderable
   ? TRenderable
   : never
 
-/** Determine which properties should be excluded from styling for different renderable types */
+/**
+ * Determines which properties should be excluded from styling for different renderable types.
+ *
+ * Different components have specific properties that should not be passed via the `style` prop.
+ * This type helper ensures proper separation between direct props and style props.
+ *
+ * @internal
+ */
 export type GetNonStyledProperties<TConstructor> =
   TConstructor extends RenderableConstructor<TextRenderable>
     ? NonStyledProps | "content"
@@ -94,15 +127,30 @@ export type GetNonStyledProperties<TConstructor> =
 // Component Props System
 // ============================================================================
 
-/** Base props for container components that accept children */
+/**
+ * Base props for container components that accept children.
+ *
+ * @internal
+ */
 type ContainerProps<TOptions> = TOptions & { children?: React.ReactNode }
 
-/** Smart component props that automatically determine excluded properties */
+/**
+ * Smart component props that automatically determine excluded properties.
+ *
+ * Combines the component's options with React props and a `style` prop for styling.
+ * The `style` prop automatically excludes properties that should be passed directly.
+ *
+ * @internal
+ */
 type ComponentProps<TOptions extends RenderableOptions<TRenderable>, TRenderable extends BaseRenderable> = TOptions & {
   style?: Partial<Omit<TOptions, GetNonStyledProperties<RenderableConstructor<TRenderable>>>>
 } & ReactProps<TRenderable>
 
-/** Valid text content types for Text component children */
+/**
+ * Valid text content types for Text component children.
+ *
+ * @internal
+ */
 type TextChildren = string | number | boolean | null | undefined | React.ReactNode
 
 // ============================================================================
@@ -156,7 +204,15 @@ export type TabSelectProps = ComponentProps<TabSelectRenderableOptions, TabSelec
 // Extended/Dynamic Component System
 // ============================================================================
 
-/** Convert renderable constructor to component props with proper style exclusions */
+/**
+ * Converts a renderable constructor to React component props with proper style exclusions.
+ *
+ * This type is used when extending OpenTUI with custom components to ensure proper
+ * typing for the `style` prop and other React-specific features.
+ *
+ * @template TConstructor - The renderable constructor type
+ * @template TOptions - The options type extracted from the constructor
+ */
 export type ExtendedComponentProps<
   TConstructor extends RenderableConstructor,
   TOptions = ExtractRenderableOptions<TConstructor>,
@@ -165,14 +221,34 @@ export type ExtendedComponentProps<
   style?: Partial<Omit<TOptions, GetNonStyledProperties<TConstructor>>>
 } & ReactProps<ExtractRenderable<TConstructor>>
 
-/** Helper type to create JSX element properties from a component catalogue */
+/**
+ * Helper type to create JSX element properties from a component catalogue.
+ *
+ * Transforms a mapping of component names to renderable constructors into
+ * a type suitable for JSX.IntrinsicElements declaration.
+ *
+ * @template TComponentCatalogue - Object mapping component names to constructors
+ */
 export type ExtendedIntrinsicElements<TComponentCatalogue extends Record<string, RenderableConstructor>> = {
   [TComponentName in keyof TComponentCatalogue]: ExtendedComponentProps<TComponentCatalogue[TComponentName]>
 }
 
 /**
- * Global augmentation interface for extended components
- * This will be augmented by user code using module augmentation
+ * Global augmentation interface for extended components.
+ *
+ * Use TypeScript module augmentation to add custom components to this interface,
+ * which will automatically add them to JSX.IntrinsicElements for proper type checking.
+ *
+ * @example
+ * ```tsx
+ * // In your .d.ts file
+ * declare module '@opentui/react' {
+ *   interface OpenTUIComponents {
+ *     'custom-button': typeof CustomButtonRenderable
+ *     'special-box': typeof SpecialBoxRenderable
+ *   }
+ * }
+ * ```
  */
 export interface OpenTUIComponents {
   [componentName: string]: RenderableConstructor

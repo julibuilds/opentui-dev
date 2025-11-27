@@ -5,14 +5,31 @@ import { isStyledText, StyledText } from "../lib/styled-text"
 import { type TextChunk } from "../text-buffer"
 import type { RenderContext } from "../types"
 
+/**
+ * Configuration options for {@link TextNodeRenderable}.
+ *
+ * @public
+ */
 export interface TextNodeOptions extends BaseRenderableOptions {
+  /** Foreground (text) color. */
   fg?: string | RGBA
+  /** Background color. */
   bg?: string | RGBA
+  /** Text attributes bitfield (bold, italic, underline, etc.). */
   attributes?: number
 }
 
+/** Internal brand for runtime type checking. */
 const BrandedTextNodeRenderable: unique symbol = Symbol.for("@opentui/core/TextNodeRenderable")
 
+/**
+ * Type guard to check if an object is a TextNodeRenderable.
+ *
+ * @param obj - The object to check
+ * @returns `true` if obj is a TextNodeRenderable
+ *
+ * @public
+ */
 export function isTextNodeRenderable(obj: any): obj is TextNodeRenderable {
   return !!obj?.[BrandedTextNodeRenderable]
 }
@@ -29,13 +46,61 @@ function styledTextToTextNodes(styledText: StyledText): TextNodeRenderable[] {
   })
 }
 
+/**
+ * A lightweight node for building styled text hierarchies.
+ *
+ * @remarks
+ * TextNodeRenderable is a tree structure for composing styled text. Unlike full {@link Renderable}s,
+ * TextNodes don't participate in layout or rendering directly. Instead, they form a tree that
+ * gets flattened into {@link TextChunk}s for rendering by {@link Text}.
+ *
+ * Key features:
+ * - Hierarchical style inheritance (children inherit parent styles)
+ * - Lightweight compared to full renderables
+ * - Supports mixing plain strings and styled nodes
+ * - Can convert to/from {@link StyledText}
+ *
+ * TextNodes are ideal for:
+ * - Rich text with nested styling (bold within italic, colored within underlined, etc.)
+ * - Building text programmatically with inherited styles
+ * - Converting from markup or styled text formats
+ *
+ * @example
+ * Building styled text:
+ * ```typescript
+ * const root = new TextNodeRenderable({ fg: "white" });
+ * root.add("Hello ");
+ *
+ * const bold = new TextNodeRenderable({ attributes: BOLD });
+ * bold.add("world");
+ * root.add(bold);
+ *
+ * root.add("!");
+ * // Renders as: "Hello world!" with "world" in bold
+ * ```
+ *
+ * @example
+ * Style inheritance:
+ * ```typescript
+ * const outer = new TextNodeRenderable({ fg: "red" });
+ * const inner = new TextNodeRenderable({ attributes: BOLD });
+ * inner.add("Bold Red");
+ * outer.add(inner);
+ * // "Bold Red" is both red (inherited) and bold
+ * ```
+ *
+ * @public
+ */
 export class TextNodeRenderable extends BaseRenderable {
+  /** @internal */
   [BrandedTextNodeRenderable] = true
 
   private _fg?: RGBA
   private _bg?: RGBA
   private _attributes: number
+  /** Child nodes and strings. Strings are rendered with inherited styles. */
   private _children: (string | TextNodeRenderable)[] = []
+  /** Parent node, if this is a child of another TextNodeRenderable. */
   public parent: TextNodeRenderable | null = null
 
   constructor(options: TextNodeOptions) {
@@ -60,6 +125,25 @@ export class TextNodeRenderable extends BaseRenderable {
     this.parent?.requestRender()
   }
 
+  /**
+   * Adds a child to this text node.
+   *
+   * @param obj - The child to add: a string, TextNodeRenderable, or StyledText
+   * @param index - Optional position to insert at. If omitted, appends to end.
+   * @returns The index where the child was inserted
+   *
+   * @remarks
+   * - Strings are rendered with this node's inherited styles
+   * - TextNodeRenderables become children with style inheritance
+   * - StyledText is converted to TextNodeRenderables and inserted
+   *
+   * @example
+   * ```typescript
+   * const node = new TextNodeRenderable({ fg: "blue" });
+   * node.add("Hello ");
+   * node.add(new TextNodeRenderable({ attributes: BOLD }).add("world"));
+   * ```
+   */
   public add(obj: TextNodeRenderable | StyledText | string, index?: number): number {
     if (typeof obj === "string") {
       if (index !== undefined) {
@@ -165,6 +249,15 @@ export class TextNodeRenderable extends BaseRenderable {
     this.requestRender()
   }
 
+  /**
+   * Merges this node's styles with parent styles.
+   *
+   * @param parentStyle - The parent's effective style
+   * @returns The merged style (own properties override parent's)
+   *
+   * @remarks
+   * Attributes are OR'd together (accumulative), while colors use this node's if defined.
+   */
   public mergeStyles(parentStyle: { fg?: RGBA; bg?: RGBA; attributes: number }): {
     fg?: RGBA
     bg?: RGBA
@@ -177,6 +270,14 @@ export class TextNodeRenderable extends BaseRenderable {
     }
   }
 
+  /**
+   * Recursively flattens this node tree into styled text chunks.
+   *
+   * @param parentStyle - Style inherited from parent
+   * @returns Array of styled text chunks ready for rendering
+   *
+   * @internal
+   */
   public gatherWithInheritedStyle(
     parentStyle: { fg?: RGBA; bg?: RGBA; attributes: number } = { fg: undefined, bg: undefined, attributes: 0 },
   ): TextChunk[] {
@@ -204,12 +305,31 @@ export class TextNodeRenderable extends BaseRenderable {
     return chunks
   }
 
+  /**
+   * Creates a TextNodeRenderable from a plain string.
+   *
+   * @param text - The text content
+   * @param options - Optional style configuration
+   * @returns A new TextNodeRenderable containing the text
+   *
+   * @example
+   * ```typescript
+   * const node = TextNodeRenderable.fromString("Hello", { fg: "red" });
+   * ```
+   */
   public static fromString(text: string, options: Partial<TextNodeOptions> = {}): TextNodeRenderable {
     const node = new TextNodeRenderable(options)
     node.add(text)
     return node
   }
 
+  /**
+   * Creates a TextNodeRenderable containing multiple child nodes.
+   *
+   * @param nodes - Child nodes to add
+   * @param options - Optional style configuration for the parent
+   * @returns A new TextNodeRenderable wrapping the children
+   */
   public static fromNodes(nodes: TextNodeRenderable[], options: Partial<TextNodeOptions> = {}): TextNodeRenderable {
     const node = new TextNodeRenderable(options)
     for (const childNode of nodes) {
@@ -218,6 +338,12 @@ export class TextNodeRenderable extends BaseRenderable {
     return node
   }
 
+  /**
+   * Converts this text node tree to an array of styled chunks.
+   *
+   * @param parentStyle - Optional parent style to inherit from
+   * @returns Flattened array of styled text chunks
+   */
   public toChunks(
     parentStyle: { fg?: RGBA; bg?: RGBA; attributes: number } = { fg: undefined, bg: undefined, attributes: 0 },
   ): TextChunk[] {
@@ -282,7 +408,18 @@ export class TextNodeRenderable extends BaseRenderable {
   }
 }
 
+/**
+ * Root text node that connects to the rendering system.
+ *
+ * @remarks
+ * RootTextNodeRenderable extends TextNodeRenderable with a connection to the render context
+ * and its parent {@link TextRenderable}. It's used internally by the Text component as the
+ * root of the text node tree.
+ *
+ * @internal
+ */
 export class RootTextNodeRenderable extends TextNodeRenderable {
+  /** The TextRenderable that owns this root node. */
   textParent: TextRenderable
 
   constructor(
@@ -294,6 +431,9 @@ export class RootTextNodeRenderable extends TextNodeRenderable {
     this.textParent = textParent
   }
 
+  /**
+   * Requests a render of the parent Text component.
+   */
   public requestRender(): void {
     this.markDirty()
     this.ctx.requestRender()

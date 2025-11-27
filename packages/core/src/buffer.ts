@@ -40,14 +40,58 @@ function packDrawOptions(
   return packed
 }
 
+/**
+ * High-performance cell-based drawing buffer for terminal rendering.
+ * This is the primary API for drawing text, colors, and UI elements to the terminal.
+ *
+ * @remarks
+ * OptimizedBuffer is the low-level drawing API used by all renderables. It provides:
+ * - **Cell-Based Rendering**: Each cell contains a character, foreground/background color, and text attributes
+ * - **Native Performance**: Backed by a native Zig implementation for speed
+ * - **Scissor Rects**: Clipping regions for efficient partial updates
+ * - **Alpha Blending**: Optional transparency support
+ * - **Text Rendering**: Unicode text with selection highlighting
+ * - **Box Drawing**: Borders with various styles
+ * - **Frame Buffers**: Offscreen rendering support
+ *
+ * @example
+ * ```ts
+ * // Drawing text
+ * buffer.drawText(
+ *   5, 10,  // x, y position
+ *   "Hello, World!",
+ *   RGBA.white(),  // foreground color
+ *   RGBA.black()   // background color
+ * )
+ *
+ * // Drawing a box with border
+ * buffer.drawBox({
+ *   x: 0, y: 0,
+ *   width: 40, height: 10,
+ *   border: ["top", "bottom", "left", "right"],
+ *   borderStyle: "rounded",
+ *   borderColor: RGBA.blue(),
+ *   backgroundColor: RGBA.black(),
+ *   title: "My Box"
+ * })
+ *
+ * // Fill a region
+ * buffer.fillRect(10, 5, 20, 3, RGBA.red())
+ * ```
+ *
+ * @public
+ */
 export class OptimizedBuffer {
   private static fbIdCounter = 0
+  /** Unique identifier for this buffer */
   public id: string
+  /** Reference to the native rendering library */
   public lib: RenderLib
   private bufferPtr: Pointer
   private _width: number
   private _height: number
   private _widthMethod: WidthMethod
+  /** Whether to respect alpha channel for transparency */
   public respectAlpha: boolean = false
   private _rawBuffers: {
     char: Uint32Array
@@ -109,6 +153,31 @@ export class OptimizedBuffer {
     this.bufferPtr = ptr
   }
 
+  /**
+   * Creates a new OptimizedBuffer with the specified dimensions.
+   *
+   * @param width - Width of the buffer in cells
+   * @param height - Height of the buffer in cells
+   * @param widthMethod - Character width calculation method ("unicode" or "terminal")
+   * @param options - Optional configuration
+   * @param options.respectAlpha - Whether to enable alpha blending (default: false)
+   * @param options.id - Optional identifier for debugging
+   * @returns A new OptimizedBuffer instance
+   *
+   * @example
+   * ```ts
+   * // Create a standard buffer
+   * const buffer = OptimizedBuffer.create(80, 24, "unicode")
+   *
+   * // Create a buffer with alpha blending
+   * const overlay = OptimizedBuffer.create(40, 10, "unicode", {
+   *   respectAlpha: true,
+   *   id: "overlay-buffer"
+   * })
+   * ```
+   *
+   * @public
+   */
   static create(
     width: number,
     height: number,
@@ -153,16 +222,66 @@ export class OptimizedBuffer {
     return outputBuffer.slice(0, bytesWritten)
   }
 
+  /**
+   * Clears the entire buffer, filling it with the specified background color.
+   *
+   * @param bg - Background color to fill (default: opaque black)
+   *
+   * @example
+   * ```ts
+   * // Clear to black
+   * buffer.clear()
+   *
+   * // Clear to blue
+   * buffer.clear(RGBA.blue())
+   * ```
+   *
+   * @public
+   */
   public clear(bg: RGBA = RGBA.fromValues(0, 0, 0, 1)): void {
     this.guard()
     this.lib.bufferClear(this.bufferPtr, bg)
   }
 
+  /**
+   * Sets a single cell at the specified position.
+   *
+   * @param x - X coordinate (column)
+   * @param y - Y coordinate (row)
+   * @param char - Character to draw (single character or emoji)
+   * @param fg - Foreground (text) color
+   * @param bg - Background color
+   * @param attributes - Text attributes (bold, italic, etc.) - see {@link TextAttributes}
+   *
+   * @example
+   * ```ts
+   * // Draw a red 'X' on white background
+   * buffer.setCell(10, 5, 'X', RGBA.red(), RGBA.white())
+   *
+   * // Draw bold text
+   * buffer.setCell(10, 5, 'B', RGBA.white(), RGBA.black(), TextAttributes.BOLD)
+   * ```
+   *
+   * @public
+   */
   public setCell(x: number, y: number, char: string, fg: RGBA, bg: RGBA, attributes: number = 0): void {
     this.guard()
     this.lib.bufferSetCell(this.bufferPtr, x, y, char, fg, bg, attributes)
   }
 
+  /**
+   * Sets a single cell with alpha blending enabled.
+   * Use this when you need transparency effects.
+   *
+   * @param x - X coordinate (column)
+   * @param y - Y coordinate (row)
+   * @param char - Character to draw
+   * @param fg - Foreground color (with alpha)
+   * @param bg - Background color (with alpha)
+   * @param attributes - Text attributes
+   *
+   * @public
+   */
   public setCellWithAlphaBlending(
     x: number,
     y: number,
@@ -175,6 +294,34 @@ export class OptimizedBuffer {
     this.lib.bufferSetCellWithAlphaBlending(this.bufferPtr, x, y, char, fg, bg, attributes)
   }
 
+  /**
+   * Draws a string of text at the specified position.
+   * Supports Unicode, emojis, and optional text selection highlighting.
+   *
+   * @param text - Text string to draw
+   * @param x - Starting X coordinate (column)
+   * @param y - Y coordinate (row)
+   * @param fg - Foreground (text) color
+   * @param bg - Background color (optional)
+   * @param attributes - Text attributes (bold, italic, etc.)
+   * @param selection - Optional selection range with highlighting colors
+   *
+   * @example
+   * ```ts
+   * // Draw simple text
+   * buffer.drawText("Hello, World!", 5, 10, RGBA.white(), RGBA.black())
+   *
+   * // Draw text with selection (characters 0-5 highlighted)
+   * buffer.drawText("Selected text", 5, 10, RGBA.white(), RGBA.black(), 0, {
+   *   start: 0,
+   *   end: 5,
+   *   bgColor: RGBA.blue(),
+   *   fgColor: RGBA.white()
+   * })
+   * ```
+   *
+   * @public
+   */
   public drawText(
     text: string,
     x: number,
@@ -220,10 +367,50 @@ export class OptimizedBuffer {
     }
   }
 
+  /**
+   * Fills a rectangular region with a solid background color.
+   *
+   * @param x - Starting X coordinate
+   * @param y - Starting Y coordinate
+   * @param width - Width of the rectangle
+   * @param height - Height of the rectangle
+   * @param bg - Background color to fill
+   *
+   * @example
+   * ```ts
+   * // Fill a 20x5 rectangle with red
+   * buffer.fillRect(10, 5, 20, 5, RGBA.red())
+   * ```
+   *
+   * @public
+   */
   public fillRect(x: number, y: number, width: number, height: number, bg: RGBA): void {
     this.lib.bufferFillRect(this.bufferPtr, x, y, width, height, bg)
   }
 
+  /**
+   * Draws another buffer onto this buffer at the specified position.
+   * Useful for compositing offscreen buffers or implementing layers.
+   *
+   * @param destX - Destination X coordinate
+   * @param destY - Destination Y coordinate
+   * @param frameBuffer - Source buffer to draw
+   * @param sourceX - Source X coordinate (optional)
+   * @param sourceY - Source Y coordinate (optional)
+   * @param sourceWidth - Source width (optional)
+   * @param sourceHeight - Source height (optional)
+   *
+   * @example
+   * ```ts
+   * // Draw entire offscreen buffer onto main buffer
+   * mainBuffer.drawFrameBuffer(10, 5, offscreenBuffer)
+   *
+   * // Draw partial region from source buffer
+   * mainBuffer.drawFrameBuffer(10, 5, sourceBuffer, 0, 0, 40, 20)
+   * ```
+   *
+   * @public
+   */
   public drawFrameBuffer(
     destX: number,
     destY: number,
@@ -237,6 +424,12 @@ export class OptimizedBuffer {
     this.lib.drawFrameBuffer(this.bufferPtr, destX, destY, frameBuffer.ptr, sourceX, sourceY, sourceWidth, sourceHeight)
   }
 
+  /**
+   * Destroys the buffer and frees its native resources.
+   * The buffer should not be used after calling this method.
+   *
+   * @public
+   */
   public destroy(): void {
     if (this._destroyed) return
     this._destroyed = true
@@ -304,6 +497,41 @@ export class OptimizedBuffer {
     this.lib.bufferResize(this.bufferPtr, width, height)
   }
 
+  /**
+   * Draws a box with optional borders, fill, and title.
+   * This is a high-level method used by BoxRenderable.
+   *
+   * @param options - Box drawing configuration
+   * @param options.x - X coordinate
+   * @param options.y - Y coordinate
+   * @param options.width - Width of the box
+   * @param options.height - Height of the box
+   * @param options.border - Which borders to draw (true for all, or array of sides)
+   * @param options.borderStyle - Border style: "single", "double", "rounded", "bold", "ascii"
+   * @param options.borderColor - Color of the border
+   * @param options.backgroundColor - Background color
+   * @param options.shouldFill - Whether to fill the interior (default: false)
+   * @param options.title - Optional title text
+   * @param options.titleAlignment - Title alignment: "left", "center", "right"
+   *
+   * @example
+   * ```ts
+   * // Draw a rounded box with title
+   * buffer.drawBox({
+   *   x: 5, y: 5,
+   *   width: 40, height: 10,
+   *   border: ["top", "bottom", "left", "right"],
+   *   borderStyle: "rounded",
+   *   borderColor: RGBA.cyan(),
+   *   backgroundColor: RGBA.black(),
+   *   shouldFill: true,
+   *   title: "My Window",
+   *   titleAlignment: "center"
+   * })
+   * ```
+   *
+   * @public
+   */
   public drawBox(options: {
     x: number
     y: number
@@ -338,16 +566,48 @@ export class OptimizedBuffer {
     )
   }
 
+  /**
+   * Pushes a scissor rectangle onto the stack, restricting rendering to the specified region.
+   * Useful for implementing scrollable viewports and clipping.
+   *
+   * @param x - X coordinate of the clip region
+   * @param y - Y coordinate of the clip region
+   * @param width - Width of the clip region
+   * @param height - Height of the clip region
+   *
+   * @remarks
+   * Scissor rects are stacked - call {@link popScissorRect} to remove.
+   *
+   * @example
+   * ```ts
+   * // Only draw within a 40x20 region
+   * buffer.pushScissorRect(10, 5, 40, 20)
+   * buffer.drawText("This text will be clipped", 0, 0, RGBA.white())
+   * buffer.popScissorRect()
+   * ```
+   *
+   * @public
+   */
   public pushScissorRect(x: number, y: number, width: number, height: number): void {
     this.guard()
     this.lib.bufferPushScissorRect(this.bufferPtr, x, y, width, height)
   }
 
+  /**
+   * Removes the most recently pushed scissor rectangle from the stack.
+   *
+   * @public
+   */
   public popScissorRect(): void {
     this.guard()
     this.lib.bufferPopScissorRect(this.bufferPtr)
   }
 
+  /**
+   * Clears all scissor rectangles from the stack.
+   *
+   * @public
+   */
   public clearScissorRects(): void {
     this.guard()
     this.lib.bufferClearScissorRects(this.bufferPtr)

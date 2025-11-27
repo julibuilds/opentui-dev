@@ -3,20 +3,54 @@ import { OptimizedBuffer } from "../buffer"
 import type { RenderContext, LineInfoProvider } from "../types"
 import { RGBA, parseColor } from "../lib/RGBA"
 
+/**
+ * Configuration for decorative signs displayed next to line numbers.
+ *
+ * @remarks
+ * Line signs can display custom indicators (like git status, breakpoints, diagnostics)
+ * before or after the line number.
+ *
+ * @example
+ * ```typescript
+ * const errorSign: LineSign = {
+ *   after: "●",
+ *   afterColor: "#ff0000"
+ * };
+ * lineNumbers.setLineSign(42, errorSign);
+ * ```
+ *
+ * @public
+ */
 export interface LineSign {
+  /** Text to display before the line number (e.g., git status indicator). */
   before?: string
+  /** Color for the 'before' text. */
   beforeColor?: string | RGBA
+  /** Text to display after the line number (e.g., breakpoint, error marker). */
   after?: string
+  /** Color for the 'after' text. */
   afterColor?: string | RGBA
 }
 
+/**
+ * Configuration options for {@link LineNumberRenderable}.
+ *
+ * @public
+ */
 export interface LineNumberOptions extends RenderableOptions<LineNumberRenderable> {
+  /** The target renderable to display line numbers for. Must implement LineInfoProvider. */
   target?: Renderable & LineInfoProvider
+  /** Foreground color for line numbers. @defaultValue "#888888" */
   fg?: string | RGBA
+  /** Background color for the gutter. @defaultValue "transparent" */
   bg?: string | RGBA
+  /** Minimum width of the line number column in characters. @defaultValue 3 */
   minWidth?: number
+  /** Right padding after line numbers. @defaultValue 1 */
   paddingRight?: number
+  /** Map of line numbers to custom background colors for highlighting specific lines. */
   lineColors?: Map<number, string | RGBA>
+  /** Map of line numbers to decorative signs (markers, icons). */
   lineSigns?: Map<number, LineSign>
 }
 
@@ -207,14 +241,62 @@ class GutterRenderable extends Renderable {
   }
 }
 
+/**
+ * A renderable that displays line numbers in a gutter next to text content.
+ *
+ * @remarks
+ * LineNumberRenderable wraps a target renderable (typically a {@link Code} or {@link EditBufferRenderable})
+ * and displays line numbers alongside it. Features include:
+ *
+ * - Automatic width adjustment based on line count
+ * - Custom line background colors for highlighting
+ * - Line signs (decorative markers before/after line numbers)
+ * - Full-width line background colors that extend into content area
+ * - Automatic handling of wrapped lines (continuation lines don't show numbers)
+ *
+ * @example
+ * ```typescript
+ * const lineNumbers = new LineNumberRenderable(ctx, {
+ *   fg: "#888888",
+ *   bg: "#1e1e1e",
+ *   minWidth: 4
+ * });
+ *
+ * const code = new Code(ctx, {
+ *   content: "function main() {\n  return 42;\n}",
+ *   filetype: "typescript"
+ * });
+ *
+ * lineNumbers.add(code); // Add code as target
+ *
+ * // Highlight line 2
+ * lineNumbers.setLineColor(1, "#264f78");
+ *
+ * // Add error marker on line 2
+ * lineNumbers.setLineSign(1, {
+ *   after: "●",
+ *   afterColor: "#ff0000"
+ * });
+ * ```
+ *
+ * @public
+ */
 export class LineNumberRenderable extends Renderable {
+  /** Internal gutter component that renders the line numbers. */
   private gutter: GutterRenderable | null = null
+  /** The target renderable being decorated with line numbers. */
   private target: (Renderable & LineInfoProvider) | null = null
+  /** Map of line indices to background colors. */
   private _lineColors: Map<number, RGBA>
+  /** Map of line indices to decorative signs. */
   private _lineSigns: Map<number, LineSign>
+  /** Foreground color for line numbers. */
   private _fg: RGBA
+  /** Background color for gutter. */
   private _bg: RGBA
+  /** Minimum width in characters. */
   private _minWidth: number
+  /** Right padding in characters. */
   private _paddingRight: number
 
   constructor(ctx: RenderContext, options: LineNumberOptions) {
@@ -361,29 +443,57 @@ export class LineNumberRenderable extends Renderable {
     }
   }
 
+  /**
+   * Controls visibility of line numbers.
+   *
+   * @remarks
+   * When set to false, only the target content is shown.
+   */
   public set showLineNumbers(value: boolean) {
     if (this.gutter) {
       this.gutter.visible = value
     }
   }
 
+  /** Gets whether line numbers are currently visible. */
   public get showLineNumbers(): boolean {
     return this.gutter?.visible ?? false
   }
 
+  /**
+   * Sets a background color for a specific line (0-indexed).
+   *
+   * @param line - The line index (0-based)
+   * @param color - The background color to apply
+   *
+   * @remarks
+   * The background color extends across the full width of the LineNumberRenderable,
+   * including both the gutter and content areas.
+   */
   public setLineColor(line: number, color: string | RGBA): void {
     const parsedColor = parseColor(color)
     this._lineColors.set(line, parsedColor)
   }
 
+  /**
+   * Removes the background color from a specific line.
+   *
+   * @param line - The line index (0-based)
+   */
   public clearLineColor(line: number): void {
     this._lineColors.delete(line)
   }
 
+  /** Clears all custom line background colors. */
   public clearAllLineColors(): void {
     this._lineColors.clear()
   }
 
+  /**
+   * Sets multiple line colors at once, replacing existing ones.
+   *
+   * @param lineColors - Map of line indices to colors
+   */
   public setLineColors(lineColors: Map<number, string | RGBA>): void {
     this._lineColors.clear()
     for (const [line, color] of lineColors) {
@@ -391,10 +501,26 @@ export class LineNumberRenderable extends Renderable {
     }
   }
 
+  /** Gets the current map of line colors. */
   public getLineColors(): Map<number, RGBA> {
     return this._lineColors
   }
 
+  /**
+   * Sets a decorative sign for a specific line.
+   *
+   * @param line - The line index (0-based)
+   * @param sign - The sign configuration
+   *
+   * @example
+   * ```typescript
+   * // Add a breakpoint indicator
+   * lineNumbers.setLineSign(10, {
+   *   before: "●",
+   *   beforeColor: "#ff0000"
+   * });
+   * ```
+   */
   public setLineSign(line: number, sign: LineSign): void {
     this._lineSigns.set(line, sign)
     if (this.gutter) {
@@ -402,6 +528,11 @@ export class LineNumberRenderable extends Renderable {
     }
   }
 
+  /**
+   * Removes the sign from a specific line.
+   *
+   * @param line - The line index (0-based)
+   */
   public clearLineSign(line: number): void {
     this._lineSigns.delete(line)
     if (this.gutter) {
@@ -409,6 +540,7 @@ export class LineNumberRenderable extends Renderable {
     }
   }
 
+  /** Clears all line signs. */
   public clearAllLineSigns(): void {
     this._lineSigns.clear()
     if (this.gutter) {
@@ -416,6 +548,11 @@ export class LineNumberRenderable extends Renderable {
     }
   }
 
+  /**
+   * Sets multiple line signs at once, replacing existing ones.
+   *
+   * @param lineSigns - Map of line indices to signs
+   */
   public setLineSigns(lineSigns: Map<number, LineSign>): void {
     this._lineSigns.clear()
     for (const [line, sign] of lineSigns) {
@@ -426,6 +563,7 @@ export class LineNumberRenderable extends Renderable {
     }
   }
 
+  /** Gets the current map of line signs. */
   public getLineSigns(): Map<number, LineSign> {
     return this._lineSigns
   }

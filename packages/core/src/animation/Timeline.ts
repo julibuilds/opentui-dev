@@ -1,34 +1,77 @@
 import type { CliRenderer } from "../renderer"
 
+/**
+ * Configuration options for {@link Timeline}.
+ *
+ * @public
+ */
 export interface TimelineOptions {
+  /** Total duration of the timeline in milliseconds */
   duration?: number
+  /** Whether the timeline should loop indefinitely */
   loop?: boolean
+  /** Whether to start playing immediately upon creation */
   autoplay?: boolean
+  /** Callback invoked when the timeline completes */
   onComplete?: () => void
+  /** Callback invoked when the timeline is paused */
   onPause?: () => void
 }
 
+/**
+ * Configuration options for individual animations within a {@link Timeline}.
+ *
+ * @remarks
+ * This interface allows you to specify animation properties along with
+ * custom numeric properties to animate. Any numeric property can be animated
+ * by including it in the options object.
+ *
+ * @public
+ */
 export interface AnimationOptions {
+  /** Duration of the animation in milliseconds */
   duration: number
+  /** Easing function to apply */
   ease?: EasingFunctions
+  /** Callback invoked on each animation frame */
   onUpdate?: (animation: JSAnimation) => void
+  /** Callback invoked when animation completes */
   onComplete?: () => void
+  /** Callback invoked when animation starts */
   onStart?: () => void
+  /** Callback invoked on each loop iteration */
   onLoop?: () => void
+  /** Number of times to loop (true = infinite, number = specific count) */
   loop?: boolean | number
+  /** Delay between loop iterations in milliseconds */
   loopDelay?: number
+  /** Whether to alternate direction on each loop */
   alternate?: boolean
+  /** If true, animation is removed from timeline after completion */
   once?: boolean
+  /** Additional numeric properties to animate */
   [key: string]: any
 }
 
+/**
+ * Animation state object passed to update callbacks.
+ *
+ * @public
+ */
 export interface JSAnimation {
+  /** Array of targets being animated */
   targets: any[]
+  /** Time elapsed since last frame in milliseconds */
   deltaTime: number
+  /** Current progress (0-1) after easing */
   progress: number
+  /** Current timeline time in milliseconds */
   currentTime: number
 }
 
+/**
+ * @internal
+ */
 interface TimelineItem {
   type: "animation" | "callback" | "timeline"
   startTime: number
@@ -317,6 +360,62 @@ export class Timeline {
     }
   }
 
+  /**
+   * Adds an animation to the timeline.
+   *
+   * @param target - Object or array of objects to animate
+   * @param properties - Animation configuration and target property values
+   * @param startTime - Time offset in milliseconds when animation should start (default: 0)
+   * @returns The timeline instance for method chaining
+   *
+   * @remarks
+   * The `add` method is the primary way to create animations. Any numeric property
+   * in the `properties` object will be animated from its current value to the
+   * specified target value. Special properties control animation behavior:
+   * - `duration`: Animation length in milliseconds
+   * - `ease`: Easing function name (e.g., "linear", "inOutQuad", "outBounce")
+   * - `loop`: Number of times to loop (true for infinite, number for count)
+   * - `loopDelay`: Delay between loop iterations in milliseconds
+   * - `alternate`: Reverse direction on each loop iteration
+   * - `onUpdate`: Callback invoked each frame with animation state
+   * - `onComplete`: Callback invoked when animation completes
+   * - `onStart`: Callback invoked when animation starts
+   * - `onLoop`: Callback invoked on each loop iteration
+   *
+   * @example
+   * ```ts
+   * const box = { x: 0, y: 0, opacity: 1 }
+   * const timeline = createTimeline({ duration: 5000 })
+   *
+   * // Animate position from current values to x=100, y=50
+   * timeline.add(box, {
+   *   x: 100,
+   *   y: 50,
+   *   duration: 2000,
+   *   ease: "inOutQuad"
+   * })
+   *
+   * // Chain another animation starting at 1 second
+   * timeline.add(box, {
+   *   opacity: 0,
+   *   duration: 1000,
+   *   ease: "linear",
+   *   onUpdate: (anim) => {
+   *     console.log("Opacity:", box.opacity)
+   *   }
+   * }, 1000)
+   *
+   * // Animate with looping
+   * timeline.add(box, {
+   *   x: 200,
+   *   duration: 500,
+   *   loop: 3,
+   *   alternate: true
+   * }, 3000)
+   * ```
+   *
+   * @public
+   */
   add(target: any, properties: AnimationOptions, startTime: number | string = 0): this {
     const resolvedStartTime = typeof startTime === "string" ? 0 : startTime
 
@@ -372,6 +471,38 @@ export class Timeline {
     return this
   }
 
+  /**
+   * Schedules a callback to execute at a specific time in the timeline.
+   *
+   * @param callback - Function to invoke
+   * @param startTime - Time offset in milliseconds when callback should execute (default: 0)
+   * @returns The timeline instance for method chaining
+   *
+   * @remarks
+   * Use `call` to trigger side effects at specific points in your animation sequence,
+   * such as playing sounds, updating UI, or triggering other events.
+   *
+   * @example
+   * ```ts
+   * const timeline = createTimeline({ duration: 5000 })
+   *
+   * timeline.call(() => {
+   *   console.log("Animation starting!")
+   * }, 0)
+   *
+   * timeline.add(box, { x: 100, duration: 2000 })
+   *
+   * timeline.call(() => {
+   *   console.log("Halfway through!")
+   * }, 2500)
+   *
+   * timeline.call(() => {
+   *   console.log("Animation complete!")
+   * }, 5000)
+   * ```
+   *
+   * @public
+   */
   call(callback: () => void, startTime: number | string = 0): this {
     const resolvedStartTime = typeof startTime === "string" ? 0 : startTime
 
@@ -385,6 +516,52 @@ export class Timeline {
     return this
   }
 
+  /**
+   * Synchronizes a child timeline to start at a specific time in this timeline.
+   *
+   * @param timeline - Child timeline to synchronize
+   * @param startTime - Time offset in milliseconds when child timeline should start (default: 0)
+   * @returns The timeline instance for method chaining
+   *
+   * @remarks
+   * Timeline synchronization allows you to compose complex animations by combining
+   * multiple timelines. The child timeline's playback is controlled by the parent:
+   * - Child timeline starts when parent reaches `startTime`
+   * - Child timeline pauses/plays/restarts with parent
+   * - Each timeline can have different durations and loop settings
+   * - A timeline can only be synced to one parent
+   *
+   * @example
+   * ```ts
+   * // Create main timeline
+   * const mainTimeline = createTimeline({
+   *   duration: 10000,
+   *   loop: true
+   * })
+   *
+   * // Create sub-timeline for box animations
+   * const boxTimeline = createTimeline({
+   *   duration: 3000,
+   *   autoplay: false
+   * })
+   * boxTimeline.add(box, { x: 100, duration: 3000 })
+   *
+   * // Create sub-timeline for color animations
+   * const colorTimeline = createTimeline({
+   *   duration: 2000,
+   *   autoplay: false
+   * })
+   * colorTimeline.add(colors, { red: 255, duration: 2000 })
+   *
+   * // Sync both to main timeline at different times
+   * mainTimeline.sync(boxTimeline, 0)      // Start immediately
+   * mainTimeline.sync(colorTimeline, 5000) // Start at 5 seconds
+   *
+   * mainTimeline.play()
+   * ```
+   *
+   * @public
+   */
   sync(timeline: Timeline, startTime: number = 0): this {
     if (timeline.synced) {
       throw new Error("Timeline already synced")
@@ -399,6 +576,37 @@ export class Timeline {
     return this
   }
 
+  /**
+   * Starts or resumes timeline playback.
+   *
+   * @returns The timeline instance for method chaining
+   *
+   * @remarks
+   * - If timeline is complete, automatically restarts from beginning
+   * - If timeline is paused, resumes from current position
+   * - Also resumes any synced child timelines that have started
+   * - Call {@link update} on each frame to advance the timeline
+   *
+   * @example
+   * ```ts
+   * const timeline = createTimeline({
+   *   duration: 5000,
+   *   autoplay: false
+   * })
+   *
+   * timeline.add(box, { x: 100, duration: 2000 })
+   *
+   * // Start playback
+   * timeline.play()
+   *
+   * // In your render loop
+   * renderer.setFrameCallback(async (deltaTime) => {
+   *   timeline.update(deltaTime)
+   * })
+   * ```
+   *
+   * @public
+   */
   play(): this {
     if (this.isComplete) {
       return this.restart()
@@ -413,6 +621,33 @@ export class Timeline {
     return this
   }
 
+  /**
+   * Pauses timeline playback at the current position.
+   *
+   * @returns The timeline instance for method chaining
+   *
+   * @remarks
+   * - Timeline state is preserved and can be resumed with {@link play}
+   * - Also pauses all synced child timelines
+   * - Triggers `onPause` callback if configured
+   *
+   * @example
+   * ```ts
+   * timeline.play()
+   *
+   * // Pause after 2 seconds
+   * setTimeout(() => {
+   *   timeline.pause()
+   * }, 2000)
+   *
+   * // Resume later
+   * setTimeout(() => {
+   *   timeline.play()
+   * }, 5000)
+   * ```
+   *
+   * @public
+   */
   pause(): this {
     this.subTimelines.forEach((subTimeline) => {
       subTimeline.timeline.pause()
@@ -586,6 +821,121 @@ class TimelineEngine {
 
 export const engine = new TimelineEngine()
 
+/**
+ * Creates a new animation timeline.
+ *
+ * @remarks
+ * A timeline is the primary way to create animations in OpenTUI. It allows you to:
+ * - Animate numeric properties of any object over time
+ * - Chain multiple animations with precise timing
+ * - Use easing functions for smooth motion
+ * - Loop and alternate animations
+ * - Synchronize multiple timelines
+ *
+ * The timeline is automatically registered with the global animation engine and
+ * will start playing immediately unless `autoplay: false` is specified.
+ *
+ * @param options - Configuration options for the timeline
+ * @returns A new Timeline instance
+ *
+ * @example
+ * ```ts
+ * import { createTimeline, BoxRenderable } from "@opentui/core"
+ *
+ * const box = new BoxRenderable(ctx, {
+ *   position: "absolute",
+ *   left: 10,
+ *   top: 10,
+ *   width: 20,
+ *   height: 10
+ * })
+ *
+ * // Create a simple animation
+ * const timeline = createTimeline({ duration: 2000 })
+ * timeline.add(box, {
+ *   x: 50,
+ *   y: 20,
+ *   duration: 1000,
+ *   ease: "inOutQuad"
+ * })
+ *
+ * // Create a looping animation with callbacks
+ * const loopTimeline = createTimeline({
+ *   duration: 3000,
+ *   loop: true,
+ *   onComplete: () => console.log("Loop complete!")
+ * })
+ *
+ * // Animate multiple properties with different timings
+ * const state = { x: 0, opacity: 1, scale: 1 }
+ * loopTimeline.add(state, {
+ *   x: 100,
+ *   duration: 1000,
+ *   ease: "outExpo",
+ *   onUpdate: (anim) => {
+ *     box.x = state.x
+ *   }
+ * }, 0)
+ * loopTimeline.add(state, {
+ *   opacity: 0.5,
+ *   scale: 1.5,
+ *   duration: 500,
+ *   ease: "inOutSine"
+ * }, 500)
+ * ```
+ *
+ * @public
+ */
+/**
+ * Creates a new timeline for orchestrating animations.
+ *
+ * @param options - Configuration options for the timeline
+ * @returns A Timeline instance ready for adding animations
+ *
+ * @remarks
+ * Timeline is the main animation system in OpenTUI. It provides:
+ * - **Sequential Animations**: Chain multiple animations with precise timing
+ * - **Parallel Animations**: Run multiple animations simultaneously
+ * - **Nested Timelines**: Compose complex animations from sub-timelines
+ * - **Looping**: Repeat animations infinitely or a specific number of times
+ * - **Easing Functions**: Smooth transitions with various easing curves
+ * - **Callbacks**: Trigger events at specific points in the animation
+ *
+ * Timelines use an object-based animation system where you specify target
+ * property values and the timeline animates from current to target values.
+ *
+ * @example
+ * ```ts
+ * // Simple timeline with one animation
+ * const timeline = createTimeline({ duration: 2000 })
+ * timeline.add(box, { x: 100, y: 50, duration: 2000 })
+ *
+ * // Timeline with multiple sequential animations
+ * const sequence = createTimeline({ duration: 5000 })
+ * sequence.add(box, { x: 100, duration: 1000 }, 0)     // Start at 0ms
+ * sequence.add(box, { y: 50, duration: 1000 }, 1000)   // Start at 1000ms
+ * sequence.add(box, { x: 0, y: 0, duration: 1000 }, 2000) // Start at 2000ms
+ *
+ * // Looping timeline
+ * const loop = createTimeline({
+ *   duration: 3000,
+ *   loop: true,
+ *   onComplete: () => console.log("Loop iteration complete")
+ * })
+ * loop.add(box, {
+ *   rotation: Math.PI * 2,
+ *   duration: 3000,
+ *   ease: "linear"
+ * })
+ *
+ * // Update timeline in render loop
+ * renderer.setFrameCallback(async (deltaTime) => {
+ *   timeline.update(deltaTime)
+ * })
+ * ```
+ *
+ * @public
+ */
 export function createTimeline(options: TimelineOptions = {}): Timeline {
   const timeline = new Timeline(options)
   if (options.autoplay !== false) {

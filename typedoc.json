@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/core/src/index.ts", "packages/react/src/index.ts"],
+  "entryPointStrategy": "expand",
+  "out": "docs/typedoc",
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/examples/**",
+    "**/scripts/**",
+    "**/tests/**"
+  ],
+  "skipErrorChecking": true,
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "disableSources": true
+}

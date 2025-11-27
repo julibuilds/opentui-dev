@@ -37,6 +37,7 @@
     "test": "bun test"
   },
   "devDependencies": {
+    "@repo/eslint-config": "*",
     "@types/bun": "latest",
     "@types/node": "latest",
     "@types/react": "^19.0.0",

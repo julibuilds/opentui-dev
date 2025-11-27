@@ -6,16 +6,71 @@ import type { RenderContext, Timeout } from "../types"
 import { type BoxOptions } from "./Box"
 import { SliderRenderable, type SliderOptions } from "./Slider"
 
+/**
+ * Configuration options for {@link ScrollBarRenderable}.
+ *
+ * @public
+ */
 export interface ScrollBarOptions extends RenderableOptions<ScrollBarRenderable> {
+  /** Orientation of the scrollbar */
   orientation: "vertical" | "horizontal"
+  /** Show arrow buttons at each end */
   showArrows?: boolean
+  /** Options for the arrow buttons */
   arrowOptions?: Omit<ArrowOptions, "direction">
+  /** Options for the slider track */
   trackOptions?: Partial<SliderOptions>
+  /** Callback invoked when scroll position changes */
   onChange?: (position: number) => void
 }
 
+/**
+ * Unit of measurement for scroll operations.
+ *
+ * @public
+ */
 export type ScrollUnit = "absolute" | "viewport" | "content" | "step"
 
+/**
+ * A scrollbar component with integrated slider and optional arrow buttons.
+ *
+ * @remarks
+ * ScrollBarRenderable provides a complete scrollbar solution with the following features:
+ * - Vertical or horizontal orientation
+ * - Integrated {@link SliderRenderable} for thumb dragging
+ * - Optional arrow buttons for incremental scrolling
+ * - Keyboard navigation support (arrow keys, page up/down, home/end)
+ * - Multiple scroll units (absolute, viewport, content, step)
+ * - Auto-hide when content fits in viewport
+ * - Repeating arrow button clicks (hold to scroll continuously)
+ *
+ * The scrollbar manages three key values:
+ * - **scrollSize**: Total size of scrollable content
+ * - **viewportSize**: Size of the visible viewport
+ * - **scrollPosition**: Current scroll position
+ *
+ * @example
+ * ```typescript
+ * const scrollbar = new ScrollBarRenderable(ctx, {
+ *   orientation: "vertical",
+ *   showArrows: true,
+ *   onChange: (position) => {
+ *     console.log("Scrolled to:", position);
+ *   }
+ * });
+ *
+ * // Configure scrollbar for content
+ * scrollbar.scrollSize = 1000;
+ * scrollbar.viewportSize = 100;
+ * scrollbar.scrollPosition = 0;
+ *
+ * // Scroll programmatically
+ * scrollbar.scrollBy(10); // Scroll by 10 pixels
+ * scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
+ * ```
+ *
+ * @public
+ */
 export class ScrollBarRenderable extends Renderable {
   public readonly slider: SliderRenderable
   public readonly startArrow: ArrowRenderable

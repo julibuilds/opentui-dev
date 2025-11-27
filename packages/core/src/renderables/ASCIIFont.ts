@@ -16,19 +16,75 @@ import type { RenderableOptions } from "../Renderable"
 import type { RenderContext } from "../types"
 import { FrameBufferRenderable, type FrameBufferOptions } from "./FrameBuffer"
 
+/**
+ * Configuration options for {@link ASCIIFontRenderable}.
+ *
+ * @public
+ */
 export interface ASCIIFontOptions extends Omit<RenderableOptions<ASCIIFontRenderable>, "width" | "height"> {
+  /** The text to display. @defaultValue "" */
   text?: string
+  /** The ASCII art font to use. @defaultValue "tiny" */
   font?: ASCIIFontName
+  /**
+   * Color(s) for the text.
+   * @remarks
+   * Can be a single color or an array of colors for gradient effects.
+   */
   color?: ColorInput | ColorInput[]
+  /** Background color. @defaultValue "transparent" */
   backgroundColor?: ColorInput
+  /** Selection background color. */
   selectionBg?: ColorInput
+  /** Selection foreground color. */
   selectionFg?: ColorInput
+  /** Whether the text can be selected. @defaultValue true */
   selectable?: boolean
 }
 
+/**
+ * A renderable that displays text using large ASCII art fonts.
+ *
+ * @remarks
+ * ASCIIFontRenderable renders text in decorative ASCII art styles, perfect for:
+ *
+ * - Eye-catching titles and headers
+ * - Logos and branding
+ * - Visual emphasis in terminal UIs
+ * - Retro/artistic text effects
+ *
+ * The renderable automatically sizes itself to fit the text, supports text selection,
+ * and can use single colors or color gradients.
+ *
+ * Available fonts include: "tiny", "banner", "block", "doom", and many more.
+ *
+ * @example
+ * Basic usage:
+ * ```typescript
+ * const title = new ASCIIFontRenderable(ctx, {
+ *   text: "OpenTUI",
+ *   font: "banner",
+ *   color: "#00ff00"
+ * });
+ * ```
+ *
+ * @example
+ * Gradient colors:
+ * ```typescript
+ * const rainbow = new ASCIIFontRenderable(ctx, {
+ *   text: "Rainbow",
+ *   font: "block",
+ *   color: ["#ff0000", "#ff7f00", "#ffff00", "#00ff00", "#0000ff", "#4b0082", "#9400d3"]
+ * });
+ * ```
+ *
+ * @public
+ */
 export class ASCIIFontRenderable extends FrameBufferRenderable {
+  /** Whether text can be selected. */
   public selectable: boolean = true
 
+  /** Default configuration values. */
   protected static readonly _defaultOptions = {
     text: "",
     font: "tiny",
@@ -45,8 +101,10 @@ export class ASCIIFontRenderable extends FrameBufferRenderable {
   protected _backgroundColor: ColorInput
   protected _selectionBg: ColorInput | undefined
   protected _selectionFg: ColorInput | undefined
+  /** Cached local selection bounds. */
   protected lastLocalSelection: LocalSelectionBounds | null = null
 
+  /** Helper for managing character-based selection. */
   private selectionHelper: ASCIIFontSelectionHelper
 
   constructor(ctx: RenderContext, options: ASCIIFontOptions) {
@@ -79,6 +137,12 @@ export class ASCIIFontRenderable extends FrameBufferRenderable {
     this.renderFontToBuffer()
   }
 
+  /**
+   * The text to display.
+   *
+   * @remarks
+   * Changing this updates the dimensions and re-renders the font.
+   */
   get text(): string {
     return this._text
   }
@@ -95,6 +159,12 @@ export class ASCIIFontRenderable extends FrameBufferRenderable {
     this.requestRender()
   }
 
+  /**
+   * The ASCII art font name.
+   *
+   * @remarks
+   * See {@link ASCIIFontName} for available fonts. Changing this updates dimensions and re-renders.
+   */
   get font(): keyof typeof fonts {
     return this._font
   }
@@ -111,6 +181,9 @@ export class ASCIIFontRenderable extends FrameBufferRenderable {
     this.requestRender()
   }
 
+  /**
+   * Text color, either a single color or an array for gradients.
+   */
   get color(): ColorInput | ColorInput[] {
     return this._color
   }
@@ -121,6 +194,7 @@ export class ASCIIFontRenderable extends FrameBufferRenderable {
     this.requestRender()
   }
 
+  /** Background color for the renderable. */
   get backgroundColor(): ColorInput {
     return this._backgroundColor
   }

@@ -11,6 +11,11 @@ import {
 import { type StyledText, fg } from "../lib/styled-text"
 import type { ExtmarksController } from "../lib/extmarks"
 
+/**
+ * Actions that can be performed in a {@link TextareaRenderable}.
+ *
+ * @public
+ */
 export type TextareaAction =
   | "move-left"
   | "move-right"
@@ -44,6 +49,11 @@ export type TextareaAction =
   | "delete-word-backward"
   | "submit"
 
+/**
+ * Key binding configuration for {@link TextareaRenderable} actions.
+ *
+ * @public
+ */
 export type KeyBinding = BaseKeyBinding<TextareaAction>
 
 const defaultTextareaKeybindings: KeyBinding[] = [
@@ -93,19 +103,78 @@ const defaultTextareaKeybindings: KeyBinding[] = [
   { name: "backspace", meta: true, action: "delete-word-backward" },
 ]
 
+/**
+ * Event fired when the textarea is submitted (typically via Cmd/Meta+Enter).
+ *
+ * @public
+ */
 export interface SubmitEvent {}
 
+/**
+ * Configuration options for {@link TextareaRenderable}.
+ *
+ * @public
+ */
 export interface TextareaOptions extends EditBufferOptions {
+  /** Initial text content */
   initialValue?: string
+  /** Background color when unfocused */
   backgroundColor?: ColorInput
+  /** Text color when unfocused */
   textColor?: ColorInput
+  /** Background color when focused */
   focusedBackgroundColor?: ColorInput
+  /** Text color when focused */
   focusedTextColor?: ColorInput
+  /** Placeholder text shown when empty */
   placeholder?: StyledText | string | null
+  /** Custom key bindings to override defaults */
   keyBindings?: KeyBinding[]
+  /** Callback invoked when textarea is submitted */
   onSubmit?: (event: SubmitEvent) => void
 }
 
+/**
+ * A multi-line text input component with comprehensive editing capabilities.
+ *
+ * @remarks
+ * TextareaRenderable extends {@link EditBufferRenderable} to provide a fully-featured
+ * multi-line text editor with the following features:
+ * - Multi-line text editing with word wrapping
+ * - Comprehensive keyboard navigation (arrows, home/end, word jumping)
+ * - Text selection and clipboard operations
+ * - Undo/redo support
+ * - Customizable key bindings
+ * - Placeholder text support
+ * - Focus-aware styling (different colors for focused/unfocused states)
+ * - Submit event (triggered via Meta+Enter)
+ * - Extmarks support for custom decorations
+ *
+ * The component provides vim-like keybindings by default (Ctrl+A/E for line home/end,
+ * Ctrl+F/B for character movement, etc.) alongside standard keybindings.
+ *
+ * @example
+ * ```typescript
+ * const textarea = new TextareaRenderable(ctx, {
+ *   width: "100%",
+ *   height: 10,
+ *   placeholder: "Enter your message...",
+ *   backgroundColor: "#1e1e1e",
+ *   textColor: "#d4d4d4",
+ *   focusedBackgroundColor: "#252526",
+ *   onSubmit: (event) => {
+ *     console.log("Submitted:", textarea.getText());
+ *   }
+ * });
+ *
+ * // Listen for text changes
+ * textarea.on("change", () => {
+ *   console.log("Text changed:", textarea.getText());
+ * });
+ * ```
+ *
+ * @public
+ */
 export class TextareaRenderable extends EditBufferRenderable {
   private _placeholder: StyledText | string | null
   private _unfocusedBackgroundColor: RGBA

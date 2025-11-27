@@ -61,27 +61,53 @@ registerEnvVar({
   default: true,
 })
 
+/**
+ * Configuration options for {@link createCliRenderer}.
+ *
+ * @public
+ */
 export interface CliRendererConfig {
+  /** Input stream for reading terminal input (defaults to process.stdin) */
   stdin?: NodeJS.ReadStream
+  /** Output stream for writing terminal output (defaults to process.stdout) */
   stdout?: NodeJS.WriteStream
+  /** Whether to automatically exit the process when Ctrl+C is pressed (default: false) */
   exitOnCtrlC?: boolean
+  /** Debounce delay for input events in milliseconds */
   debounceDelay?: number
+  /** Target frames per second for the render loop (default: 30) */
   targetFps?: number
+  /** Interval for memory snapshots in milliseconds */
   memorySnapshotInterval?: number
+  /** Whether to use threading for rendering (default: true, auto-disabled on Linux) */
   useThread?: boolean
+  /** Whether to gather rendering statistics (default: false) */
   gatherStats?: boolean
+  /** Maximum number of stat samples to keep */
   maxStatSamples?: number
+  /** Console configuration options */
   consoleOptions?: ConsoleOptions
+  /** Post-processing functions to apply to the buffer each frame */
   postProcessFns?: ((buffer: OptimizedBuffer, deltaTime: number) => void)[]
+  /** Whether to enable mouse movement tracking (default: false) */
   enableMouseMovement?: boolean
+  /** Whether to enable mouse input (default: true) */
   useMouse?: boolean
+  /** Whether to use the terminal's alternate screen buffer (default: true) */
   useAlternateScreen?: boolean
+  /** Whether to enable the debug console (default: true) */
   useConsole?: boolean
+  /** Experimental: Split screen height for console/renderer */
   experimental_splitHeight?: number
+  /** Whether to use Kitty keyboard protocol for enhanced key handling (default: true) */
   useKittyKeyboard?: boolean
+  /** Background color for the renderer */
   backgroundColor?: ColorInput
+  /** Whether to open console automatically on errors (default: true) */
   openConsoleOnError?: boolean
+  /** Input handlers that will be prepended to the handler chain */
   prependInputHandlers?: ((sequence: string) => boolean)[]
+  /** Callback invoked when the renderer is destroyed */
   onDestroy?: () => void
 }
 
@@ -90,12 +116,27 @@ export type PixelResolution = {
   height: number
 }
 
+/**
+ * Represents a mouse event in the terminal.
+ *
+ * @remarks
+ * Mouse events are triggered by user interactions such as clicks, drags, scrolls,
+ * and mouse movements. Events are dispatched to the renderable at the mouse position.
+ *
+ * @public
+ */
 export class MouseEvent {
+  /** Type of mouse event (e.g., "down", "up", "move", "drag", "scroll") */
   public readonly type: MouseEventType
+  /** Mouse button that was pressed (0=left, 1=middle, 2=right) */
   public readonly button: number
+  /** X coordinate in terminal cells */
   public readonly x: number
+  /** Y coordinate in terminal cells */
   public readonly y: number
+  /** The renderable that is the source of a drag operation */
   public readonly source?: Renderable
+  /** Keyboard modifiers active during the event */
   public readonly modifiers: {
     shift: boolean
     alt: boolean
@@ -172,6 +213,41 @@ const rendererTracker = singleton("RendererTracker", () => {
   }
 })
 
+/**
+ * Creates and initializes a CLI renderer instance.
+ *
+ * @remarks
+ * This is the primary entry point for creating a terminal UI application with OpenTUI.
+ * The renderer manages the terminal state, handles input/output, and coordinates
+ * rendering of all UI components.
+ *
+ * @param config - Configuration options for the renderer
+ * @returns A promise that resolves to an initialized CliRenderer instance
+ *
+ * @example
+ * ```ts
+ * import { createCliRenderer, BoxRenderable } from "@opentui/core"
+ *
+ * // Create a basic renderer
+ * const renderer = await createCliRenderer({
+ *   exitOnCtrlC: true,
+ *   targetFps: 60
+ * })
+ *
+ * // Add UI components
+ * const box = new BoxRenderable(renderer, {
+ *   width: 20,
+ *   height: 10,
+ *   backgroundColor: "#FF6B6B"
+ * })
+ * renderer.root.add(box)
+ *
+ * // Start the render loop
+ * renderer.start()
+ * ```
+ *
+ * @public
+ */
 export async function createCliRenderer(config: CliRendererConfig = {}): Promise<CliRenderer> {
   if (process.argv.includes("--delay-start")) {
     await new Promise((resolve) => setTimeout(resolve, 5000))
@@ -222,6 +298,42 @@ export enum RendererControlState {
   EXPLICIT_STOPPED = "explicit_stopped",
 }
 
+/**
+ * The main renderer class for terminal UI applications.
+ *
+ * @remarks
+ * CliRenderer manages the terminal state, coordinates rendering of all UI components,
+ * handles user input (keyboard and mouse), and runs the render loop. It provides
+ * the root container for all renderables and manages the layout/rendering lifecycle.
+ *
+ * Do not instantiate directly - use {@link createCliRenderer} instead.
+ *
+ * @example
+ * ```ts
+ * import { createCliRenderer, TextRenderable } from "@opentui/core"
+ *
+ * const renderer = await createCliRenderer()
+ *
+ * // Add components to the root
+ * const text = new TextRenderable(renderer, {
+ *   content: "Hello, World!",
+ *   fg: "#00FF00"
+ * })
+ * renderer.root.add(text)
+ *
+ * // Set up keyboard handler
+ * renderer.keyInput.on("keypress", (key) => {
+ *   if (key.name === "q") {
+ *     renderer.destroy()
+ *   }
+ * })
+ *
+ * // Start the render loop
+ * renderer.start()
+ * ```
+ *
+ * @public
+ */
 export class CliRenderer extends EventEmitter implements RenderContext {
   private static animationFrameId = 0
   private lib: RenderLib
@@ -542,6 +654,23 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     return this.realStdoutWrite.call(this.stdout, chunk, encoding, callback)
   }
 
+  /**
+   * Requests a single render frame to be scheduled.
+   *
+   * @remarks
+   * This method is useful when you need to manually trigger a render update
+   * without starting the continuous render loop. It's commonly used when
+   * the renderer is stopped but you want to display changes.
+   *
+   * @example
+   * ```ts
+   * // Update UI without starting render loop
+   * box.backgroundColor = "red"
+   * renderer.requestRender()
+   * ```
+   *
+   * @public
+   */
   public requestRender() {
     if (
       !this.rendering &&
@@ -1117,6 +1246,32 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     this.requestRender()
   }
 
+  /**
+   * Sets the background color for the entire terminal canvas.
+   *
+   * @param color - Color value (hex string, color name, or RGBA object)
+   *
+   * @remarks
+   * The background color fills the entire terminal area not covered by renderables.
+   * Accepts multiple color formats including:
+   * - Hex strings: "#FF0000", "#F00"
+   * - Color names: "red", "blue", "green"
+   * - RGBA objects: RGBA.fromInts(255, 0, 0, 255)
+   *
+   * @example
+   * ```ts
+   * // Using hex color
+   * renderer.setBackgroundColor("#1a1b26")
+   *
+   * // Using color name
+   * renderer.setBackgroundColor("black")
+   *
+   * // Using RGBA object
+   * renderer.setBackgroundColor(RGBA.fromInts(26, 27, 38, 255))
+   * ```
+   *
+   * @public
+   */
   public setBackgroundColor(color: ColorInput): void {
     const parsedColor = parseColor(color)
     this.lib.setBackgroundColor(this.rendererPtr, parsedColor as RGBA)
@@ -1217,14 +1372,51 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     this.postProcessFns = []
   }
 
+  /**
+   * Registers a callback to be invoked on every render frame.
+   *
+   * @param callback - Async function that receives deltaTime in milliseconds
+   *
+   * @remarks
+   * Frame callbacks are executed before rendering each frame and are useful for:
+   * - Animations and smooth transitions
+   * - Physics simulations
+   * - Time-based updates
+   * - Game loops
+   *
+   * Multiple callbacks can be registered and will execute in order.
+   *
+   * @example
+   * ```ts
+   * let rotation = 0
+   * renderer.setFrameCallback(async (deltaTime) => {
+   *   rotation += deltaTime * 0.001
+   *   box.transform.rotation = rotation
+   * })
+   * ```
+   *
+   * @public
+   */
   public setFrameCallback(callback: (deltaTime: number) => Promise<void>): void {
     this.frameCallbacks.push(callback)
   }
 
+  /**
+   * Removes a previously registered frame callback.
+   *
+   * @param callback - The callback function to remove
+   *
+   * @public
+   */
   public removeFrameCallback(callback: (deltaTime: number) => Promise<void>): void {
     this.frameCallbacks = this.frameCallbacks.filter((cb) => cb !== callback)
   }
 
+  /**
+   * Removes all registered frame callbacks.
+   *
+   * @public
+   */
   public clearFrameCallbacks(): void {
     this.frameCallbacks = []
   }
@@ -1247,6 +1439,33 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     }
   }
 
+  /**
+   * Starts the continuous render loop.
+   *
+   * @remarks
+   * Once started, the renderer will continuously render frames at the configured
+   * target FPS until {@link stop} is called. This is required for:
+   * - Animations
+   * - Interactive applications
+   * - Real-time updates
+   * - Frame callbacks
+   *
+   * The render loop can be stopped with {@link stop} and restarted with {@link start}.
+   *
+   * @example
+   * ```ts
+   * const renderer = await createCliRenderer({ targetFps: 60 })
+   *
+   * // Set up your UI
+   * const box = new BoxRenderable(renderer, { width: 10, height: 5 })
+   * renderer.root.add(box)
+   *
+   * // Start the render loop
+   * renderer.start()
+   * ```
+   *
+   * @public
+   */
   public start(): void {
     this._controlState = RendererControlState.EXPLICIT_STARTED
     this.internalStart()
@@ -1329,6 +1548,25 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     this._isRunning = false
   }
 
+  /**
+   * Stops the continuous render loop.
+   *
+   * @remarks
+   * After stopping, the renderer will no longer automatically render frames.
+   * You can still trigger manual renders using {@link requestRender}.
+   * The render loop can be restarted by calling {@link start}.
+   *
+   * @example
+   * ```ts
+   * // Stop rendering when done with animation
+   * renderer.stop()
+   *
+   * // Later, restart if needed
+   * renderer.start()
+   * ```
+   *
+   * @public
+   */
   public stop(): void {
     this._controlState = RendererControlState.EXPLICIT_STOPPED
     this.internalStop()

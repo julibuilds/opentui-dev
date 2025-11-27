@@ -6,10 +6,60 @@ import { type RenderContext } from "../types"
 import { RootTextNodeRenderable, TextNodeRenderable } from "./TextNode"
 import { TextBufferRenderable, type TextBufferOptions } from "./TextBufferRenderable"
 
+/**
+ * Configuration options for TextRenderable.
+ *
+ * @public
+ */
 export interface TextOptions extends TextBufferOptions {
+  /** Text content to display (plain string or StyledText) */
   content?: StyledText | string
 }
 
+/**
+ * A renderable component for displaying styled text.
+ * Supports colors, text attributes, and automatic text wrapping.
+ *
+ * @remarks
+ * TextRenderable is the primary component for displaying text in OpenTUI. It provides:
+ * - **Styled Text**: Full support for colors and text attributes via StyledText
+ * - **Text Wrapping**: Automatic wrapping based on available width
+ * - **Default Styling**: Default foreground/background colors and attributes
+ * - **Dynamic Updates**: Content can be changed after creation
+ *
+ * For multi-line text editing with user input, use {@link TextareaRenderable} instead.
+ * For plain text without styling, you can pass a regular string.
+ *
+ * @example
+ * ```ts
+ * import { TextRenderable, t, red, bold } from "@opentui/core"
+ *
+ * // Simple text
+ * const text1 = new TextRenderable(ctx, {
+ *   content: "Hello, World!",
+ *   width: 40
+ * })
+ *
+ * // Styled text with colors
+ * const text2 = new TextRenderable(ctx, {
+ *   content: t`Status: ${green("Online")}`,
+ *   width: "auto"
+ * })
+ *
+ * // Text with multiple styles
+ * const text3 = new TextRenderable(ctx, {
+ *   content: t`${bold(red("Error"))}: ${yellow("Connection failed")}`,
+ *   defaultFg: RGBA.white(),
+ *   defaultBg: RGBA.black()
+ * })
+ *
+ * // Update content dynamically
+ * text1.content = "Updated text!"
+ * text2.content = t`Status: ${red("Offline")}`
+ * ```
+ *
+ * @public
+ */
 export class TextRenderable extends TextBufferRenderable {
   private _text: StyledText
 

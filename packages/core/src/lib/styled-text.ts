@@ -5,27 +5,85 @@ import { parseColor, type ColorInput } from "./RGBA"
 
 const BrandedStyledText: unique symbol = Symbol.for("@opentui/core/StyledText")
 
+/**
+ * Type alias for color input values.
+ *
+ * @public
+ */
 export type Color = ColorInput
 
+/**
+ * Style attributes that can be applied to text.
+ * Used to configure foreground/background colors and text styling.
+ *
+ * @public
+ */
 export interface StyleAttrs {
+  /** Foreground (text) color */
   fg?: Color
+  /** Background color */
   bg?: Color
+  /** Bold text */
   bold?: boolean
+  /** Italic text */
   italic?: boolean
+  /** Underlined text */
   underline?: boolean
+  /** Strikethrough text */
   strikethrough?: boolean
+  /** Dimmed/faint text */
   dim?: boolean
+  /** Reverse video (swap fg/bg colors) */
   reverse?: boolean
+  /** Blinking text */
   blink?: boolean
 }
 
+/**
+ * Type guard to check if an object is a StyledText instance.
+ *
+ * @param obj - Object to check
+ * @returns True if the object is StyledText
+ *
+ * @public
+ */
 export function isStyledText(obj: any): obj is StyledText {
   return obj && obj[BrandedStyledText]
 }
 
+/**
+ * Container for styled text content composed of multiple text chunks.
+ * Each chunk can have its own colors and text attributes.
+ *
+ * @remarks
+ * StyledText is the primary way to create colorful and formatted text in OpenTUI.
+ * Use the template literal syntax with the `t` function or compose chunks using
+ * the color/style helper functions.
+ *
+ * @example
+ * ```ts
+ * import { t, red, bold, blue, bgWhite } from "@opentui/core"
+ *
+ * // Using template literals
+ * const text1 = t`Hello ${red("World")}!`
+ * const text2 = t`${bold("Important")}: ${blue("Information")}`
+ *
+ * // Composing styles
+ * const text3 = t`${bold(red("Error"))}: Something went wrong`
+ * const text4 = t`${bgWhite(blue("Highlighted"))} text`
+ *
+ * // Using in TextRenderable
+ * const textComponent = new TextRenderable(ctx, {
+ *   content: t`Status: ${green("Online")}`
+ * })
+ * ```
+ *
+ * @public
+ */
 export class StyledText {
   [BrandedStyledText] = true
 
+  /** Array of text chunks, each with optional styling */
   public chunks: TextChunk[]
 
   constructor(chunks: TextChunk[]) {
@@ -76,14 +134,24 @@ function applyStyle(input: StylableInput, style: StyleAttrs): TextChunk {
   }
 }
 
-// Color functions
+/**
+ * Foreground color functions - apply standard colors to text.
+ * @public
+ */
 export const black = (input: StylableInput): TextChunk => applyStyle(input, { fg: "black" })
+/** @public */
 export const red = (input: StylableInput): TextChunk => applyStyle(input, { fg: "red" })
+/** @public */
 export const green = (input: StylableInput): TextChunk => applyStyle(input, { fg: "green" })
+/** @public */
 export const yellow = (input: StylableInput): TextChunk => applyStyle(input, { fg: "yellow" })
+/** @public */
 export const blue = (input: StylableInput): TextChunk => applyStyle(input, { fg: "blue" })
+/** @public */
 export const magenta = (input: StylableInput): TextChunk => applyStyle(input, { fg: "magenta" })
+/** @public */
 export const cyan = (input: StylableInput): TextChunk => applyStyle(input, { fg: "cyan" })
+/** @public */
 export const white = (input: StylableInput): TextChunk => applyStyle(input, { fg: "white" })
 
 // Bright color functions
@@ -106,28 +174,99 @@ export const bgMagenta = (input: StylableInput): TextChunk => applyStyle(input, 
 export const bgCyan = (input: StylableInput): TextChunk => applyStyle(input, { bg: "cyan" })
 export const bgWhite = (input: StylableInput): TextChunk => applyStyle(input, { bg: "white" })
 
-// Style functions
+/**
+ * Text style functions - apply formatting attributes to text.
+ *
+ * @example
+ * ```ts
+ * const text = t`${bold("Important")} ${italic("note")}`
+ * ```
+ *
+ * @public
+ */
 export const bold = (input: StylableInput): TextChunk => applyStyle(input, { bold: true })
+/** @public */
 export const italic = (input: StylableInput): TextChunk => applyStyle(input, { italic: true })
+/** @public */
 export const underline = (input: StylableInput): TextChunk => applyStyle(input, { underline: true })
+/** @public */
 export const strikethrough = (input: StylableInput): TextChunk => applyStyle(input, { strikethrough: true })
+/** @public */
 export const dim = (input: StylableInput): TextChunk => applyStyle(input, { dim: true })
+/** @public */
 export const reverse = (input: StylableInput): TextChunk => applyStyle(input, { reverse: true })
+/** @public */
 export const blink = (input: StylableInput): TextChunk => applyStyle(input, { blink: true })
 
-// Custom color functions
+/**
+ * Creates a foreground color function with a custom color.
+ *
+ * @param color - The color to apply (CSS name, hex, or RGBA instance)
+ * @returns A function that applies the foreground color to text
+ *
+ * @example
+ * ```ts
+ * const orange = fg("#ff6600")
+ * const text = t`${orange("Custom color")} text`
+ * ```
+ *
+ * @public
+ */
 export const fg =
   (color: Color) =>
   (input: StylableInput): TextChunk =>
     applyStyle(input, { fg: color })
+
+/**
+ * Creates a background color function with a custom color.
+ *
+ * @param color - The color to apply (CSS name, hex, or RGBA instance)
+ * @returns A function that applies the background color to text
+ *
+ * @example
+ * ```ts
+ * const highlight = bg("#ffff00")
+ * const text = t`${highlight("Highlighted")} text`
+ * ```
+ *
+ * @public
+ */
 export const bg =
   (color: Color) =>
   (input: StylableInput): TextChunk =>
     applyStyle(input, { bg: color })
 
 /**
- * Template literal handler for styled text (non-cached version).
- * Returns a StyledText object containing chunks of text with optional styles.
+ * Template literal tag function for creating styled text.
+ * Allows composing text with inline color and style formatting.
+ *
+ * @param strings - Template string parts
+ * @param values - Interpolated values (strings, numbers, or styled chunks)
+ * @returns A StyledText object containing all text chunks
+ *
+ * @example
+ * ```ts
+ * import { t, red, bold, green, bgBlue } from "@opentui/core"
+ *
+ * // Simple colored text
+ * const text1 = t`Hello ${red("World")}!`
+ *
+ * // Combining styles
+ * const text2 = t`${bold(red("Error"))}: File not found`
+ *
+ * // Multiple styles in one line
+ * const text3 = t`${green("✓")} Success ${red("✗")} Failed`
+ *
+ * // Background colors
+ * const text4 = t`${bgBlue(white("Highlighted"))} normal text`
+ *
+ * // Using with components
+ * const label = new TextRenderable(ctx, {
+ *   content: t`Status: ${green("Online")}`
+ * })
+ * ```
+ *
+ * @public
  */
 export function t(strings: TemplateStringsArray, ...values: StylableInput[]): StyledText {
   const chunks: TextChunk[] = []

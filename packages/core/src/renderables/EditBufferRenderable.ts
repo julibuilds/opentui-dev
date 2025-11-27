@@ -8,36 +8,119 @@ import type { OptimizedBuffer } from "../buffer"
 import { MeasureMode } from "yoga-layout"
 import type { SyntaxStyle } from "../syntax-style"
 
+/**
+ * Event data for cursor position changes.
+ *
+ * @public
+ */
 export interface CursorChangeEvent {
+  /** The logical line number (0-based). */
   line: number
+  /** The visual column position (0-based). */
   visualColumn: number
 }
 
+/**
+ * Event data for content changes.
+ *
+ * @remarks
+ * This event has no payload. Use the EditBuffer's `getText()` method to retrieve
+ * the current content if needed.
+ *
+ * @public
+ */
 export interface ContentChangeEvent {
   // No payload - use getText() to retrieve content if needed
 }
 
+/**
+ * Configuration options for {@link EditBufferRenderable}.
+ *
+ * @public
+ */
 export interface EditBufferOptions extends RenderableOptions<EditBufferRenderable> {
+  /** Text color. @defaultValue white */
   textColor?: string | RGBA
+  /** Background color. @defaultValue transparent */
   backgroundColor?: string | RGBA
+  /** Selection background color. */
   selectionBg?: string | RGBA
+  /** Selection foreground color. */
   selectionFg?: string | RGBA
+  /** Whether text can be selected. @defaultValue true */
   selectable?: boolean
+  /** Text attributes bitfield (bold, italic, underline). @defaultValue 0 */
   attributes?: number
+  /** Text wrapping mode. @defaultValue "word" */
   wrapMode?: "none" | "char" | "word"
+  /**
+   * Scroll margin as fraction of viewport height.
+   * @defaultValue 0.2
+   * @remarks
+   * When cursor approaches edges, viewport scrolls to maintain this margin.
+   */
   scrollMargin?: number
+  /** Whether to show the cursor. @defaultValue true */
   showCursor?: boolean
+  /** Cursor color. @defaultValue white */
   cursorColor?: string | RGBA
+  /** Cursor style configuration. */
   cursorStyle?: CursorStyleOptions
+  /** Syntax highlighting theme. */
   syntaxStyle?: SyntaxStyle
+  /** Custom tab indicator character or width. */
   tabIndicator?: string | number
+  /** Tab indicator color. */
   tabIndicatorColor?: string | RGBA
+  /** Callback invoked when cursor position changes. */
   onCursorChange?: (event: CursorChangeEvent) => void
+  /** Callback invoked when content changes. */
   onContentChange?: (event: ContentChangeEvent) => void
 }
 
+/**
+ * Abstract base class for editable text components with cursor navigation.
+ *
+ * @remarks
+ * EditBufferRenderable provides a full-featured text editing experience:
+ *
+ * - Multi-line text editing with cursor navigation
+ * - Text selection and clipboard operations
+ * - Text wrapping (character, word, or none)
+ * - Automatic viewport scrolling with configurable margins
+ * - Syntax highlighting support
+ * - Undo/redo history
+ * - Custom cursor styling and colors
+ * - Event callbacks for cursor and content changes
+ *
+ * This is an abstract class that must be extended. Use {@link Textarea} for a ready-to-use
+ * implementation or extend this class for custom editing components.
+ *
+ * The EditBuffer handles the text content and editing operations, while EditorView
+ * manages layout, wrapping, and viewport positioning.
+ *
+ * @example
+ * ```typescript
+ * class MyEditor extends EditBufferRenderable {
+ *   constructor(ctx: RenderContext) {
+ *     super(ctx, {
+ *       textColor: "#d4d4d4",
+ *       backgroundColor: "#1e1e1e",
+ *       wrapMode: "word",
+ *       scrollMargin: 0.2,
+ *       onContentChange: (e) => console.log("Content changed"),
+ *       onCursorChange: (e) => console.log(`Cursor at ${e.line}:${e.visualColumn}`)
+ *     });
+ *   }
+ * }
+ * ```
+ *
+ * @public
+ */
 export abstract class EditBufferRenderable extends Renderable implements LineInfoProvider {
+  /** Whether this renderable can receive keyboard focus. */
   protected _focusable: boolean = true
+  /** Whether text can be selected. */
   public selectable: boolean = true
 
   protected _textColor: RGBA
@@ -46,13 +129,19 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
   protected _selectionBg: RGBA | undefined
   protected _selectionFg: RGBA | undefined
   protected _wrapMode: "none" | "char" | "word" = "word"
+  /** Fraction of viewport height to maintain as margin when scrolling. */
   protected _scrollMargin: number = 0.2
   protected _showCursor: boolean = true
   protected _cursorColor: RGBA
   protected _cursorStyle: CursorStyleOptions
+  /** Cached local selection bounds. */
   protected lastLocalSelection: LocalSelectionBounds | null = null
   protected _tabIndicator?: string | number
   protected _tabIndicatorColor?: RGBA
+  /**
+   * Tracks the selection anchor position in screen and viewport coordinates.
+   * Used to maintain proper selection during viewport scrolling.
+   */
   private _selectionAnchorState: {
     screenX: number
     screenY: number
@@ -63,7 +152,9 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
   private _cursorChangeListener: ((event: CursorChangeEvent) => void) | undefined = undefined
   private _contentChangeListener: ((event: ContentChangeEvent) => void) | undefined = undefined
 
+  /** The underlying text buffer managing content and editing operations. */
   public readonly editBuffer: EditBuffer
+  /** The view layer managing layout, wrapping, and viewport. */
   public readonly editorView: EditorView
 
   protected _defaultOptions = {
@@ -549,12 +640,22 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
     return this.editBuffer.getLineHighlights(lineIdx)
   }
 
+  /**
+   * Sets the entire text content.
+   *
+   * @param text - The new text content
+   * @param opts - Options controlling undo history
+   * @param opts.history - If true, adds to undo history; if false, replaces without history. @defaultValue true
+   */
   public setText(text: string, opts?: { history?: boolean }): void {
     this.editBuffer.setText(text, opts)
     this.yogaNode.markDirty()
     this.requestRender()
   }
 
+  /**
+   * Clears all text content and highlights.
+   */
   public clear(): void {
     this.editBuffer.clear()
     this.editBuffer.clearAllHighlights()
@@ -562,22 +663,51 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
     this.requestRender()
   }
 
+  /**
+   * Deletes a range of text specified by line and column coordinates.
+   *
+   * @param startLine - Starting line (0-based)
+   * @param startCol - Starting column (0-based)
+   * @param endLine - Ending line (0-based)
+   * @param endCol - Ending column (0-based)
+   */
   public deleteRange(startLine: number, startCol: number, endLine: number, endCol: number): void {
     this.editBuffer.deleteRange(startLine, startCol, endLine, endCol)
     this.yogaNode.markDirty()
     this.requestRender()
   }
 
+  /**
+   * Inserts text at the current cursor position.
+   *
+   * @param text - The text to insert
+   */
   public insertText(text: string): void {
     this.editBuffer.insertText(text)
     this.yogaNode.markDirty()
     this.requestRender()
   }
 
+  /**
+   * Gets a substring of the text by character offsets.
+   *
+   * @param startOffset - Starting character offset (0-based)
+   * @param endOffset - Ending character offset (0-based, exclusive)
+   * @returns The substring
+   */
   public getTextRange(startOffset: number, endOffset: number): string {
     return this.editBuffer.getTextRange(startOffset, endOffset)
   }
 
+  /**
+   * Gets a substring of the text by line and column coordinates.
+   *
+   * @param startRow - Starting line (0-based)
+   * @param startCol - Starting column (0-based)
+   * @param endRow - Ending line (0-based)
+   * @param endCol - Ending column (0-based)
+   * @returns The substring
+   */
   public getTextRangeByCoords(startRow: number, startCol: number, endRow: number, endCol: number): string {
     return this.editBuffer.getTextRangeByCoords(startRow, startCol, endRow, endCol)
   }

@@ -5,36 +5,108 @@ import { RGBA, parseColor, type ColorInput } from "../lib/RGBA"
 import { Renderable, type RenderableOptions } from "../Renderable"
 import type { RenderContext } from "../types"
 
+/**
+ * An option item for {@link SelectRenderable}.
+ *
+ * @public
+ */
 export interface SelectOption {
+  /** Display name of the option */
   name: string
+  /** Description text shown below the name */
   description: string
+  /** Optional value associated with the option */
   value?: any
 }
 
+/**
+ * Configuration options for {@link SelectRenderable}.
+ *
+ * @public
+ */
 export interface SelectRenderableOptions extends RenderableOptions<SelectRenderable> {
+  /** Background color when unfocused */
   backgroundColor?: ColorInput
+  /** Text color when unfocused */
   textColor?: ColorInput
+  /** Background color when focused */
   focusedBackgroundColor?: ColorInput
+  /** Text color when focused */
   focusedTextColor?: ColorInput
+  /** List of selectable options */
   options?: SelectOption[]
+  /** Initially selected option index */
   selectedIndex?: number
+  /** Background color for the selected item */
   selectedBackgroundColor?: ColorInput
+  /** Text color for the selected item */
   selectedTextColor?: ColorInput
+  /** Color for description text */
   descriptionColor?: ColorInput
+  /** Color for selected item's description */
   selectedDescriptionColor?: ColorInput
+  /** Show a scroll indicator on the right edge */
   showScrollIndicator?: boolean
+  /** Allow wrapping from last to first item */
   wrapSelection?: boolean
+  /** Show description text below option names */
   showDescription?: boolean
+  /** ASCII font to use for option names */
   font?: keyof typeof fonts
+  /** Vertical spacing between items */
   itemSpacing?: number
+  /** Number of items to skip when Shift is held */
   fastScrollStep?: number
 }
 
+/**
+ * Events emitted by {@link SelectRenderable}.
+ *
+ * @public
+ */
 export enum SelectRenderableEvents {
+  /** Fired when selection changes */
   SELECTION_CHANGED = "selectionChanged",
+  /** Fired when an item is selected (Enter pressed) */
   ITEM_SELECTED = "itemSelected",
 }
 
+/**
+ * A vertical list selector component with keyboard navigation and scrolling.
+ *
+ * @remarks
+ * SelectRenderable provides a scrollable list of options with the following features:
+ * - Keyboard navigation (up/down arrows, j/k vim keys)
+ * - Fast scrolling with Shift modifier
+ * - Optional ASCII font rendering for option names
+ * - Customizable colors for focused/unfocused and selected states
+ * - Optional scroll indicator
+ * - Optional wrapping from last to first item
+ * - Auto-centering of selected item in viewport
+ * - Two events: selection changed and item selected
+ *
+ * @example
+ * ```typescript
+ * const select = new SelectRenderable(ctx, {
+ *   width: 40,
+ *   height: 15,
+ *   options: [
+ *     { name: "Option 1", description: "First choice" },
+ *     { name: "Option 2", description: "Second choice" },
+ *     { name: "Option 3", description: "Third choice" }
+ *   ],
+ *   selectedBackgroundColor: "#3344ff",
+ *   showScrollIndicator: true,
+ *   wrapSelection: true
+ * });
+ *
+ * select.on(SelectRenderableEvents.ITEM_SELECTED, (index, option) => {
+ *   console.log("Selected:", option.name);
+ * });
+ * ```
+ *
+ * @public
+ */
 export class SelectRenderable extends Renderable {
   protected _focusable: boolean = true
 

@@ -4,26 +4,91 @@ import { RGBA, parseColor, type ColorInput } from "../lib/RGBA"
 import { Renderable, type RenderableOptions } from "../Renderable"
 import type { RenderContext, CursorStyleOptions } from "../types"
 
+/**
+ * Configuration options for InputRenderable.
+ *
+ * @public
+ */
 export interface InputRenderableOptions extends RenderableOptions<InputRenderable> {
+  /** Background color when not focused */
   backgroundColor?: ColorInput
+  /** Text color when not focused */
   textColor?: ColorInput
+  /** Background color when focused */
   focusedBackgroundColor?: ColorInput
+  /** Text color when focused */
   focusedTextColor?: ColorInput
+  /** Placeholder text shown when input is empty */
   placeholder?: string
+  /** Color of placeholder text */
   placeholderColor?: ColorInput
+  /** Color of the cursor */
   cursorColor?: ColorInput
+  /** Cursor style configuration */
   cursorStyle?: CursorStyleOptions
+  /** Maximum number of characters allowed */
   maxLength?: number
+  /** Initial value of the input */
   value?: string
 }
 
-// TODO: make this just plain strings instead of an enum (same for other events)
+/**
+ * Events emitted by InputRenderable.
+ *
+ * @public
+ */
 export enum InputRenderableEvents {
+  /** Fired on every character change */
   INPUT = "input",
+  /** Fired when the value changes and input loses focus */
   CHANGE = "change",
+  /** Fired when Enter key is pressed */
   ENTER = "enter",
 }
 
+/**
+ * A single-line text input component with cursor and keyboard support.
+ *
+ * @remarks
+ * InputRenderable is the standard component for single-line text input. It provides:
+ * - **Keyboard Input**: Full keyboard support with cursor navigation
+ * - **Placeholder Text**: Shows placeholder when empty
+ * - **Focus Styling**: Different colors for focused/unfocused states
+ * - **Cursor**: Customizable cursor style and color
+ * - **Max Length**: Optional character limit
+ * - **Events**: input, change, and enter events
+ *
+ * @example
+ * ```ts
+ * // Basic input
+ * const input = new InputRenderable(ctx, {
+ *   width: 40,
+ *   height: 1,
+ *   placeholder: "Enter your name...",
+ *   value: ""
+ * })
+ *
+ * // Styled input with event handling
+ * const emailInput = new InputRenderable(ctx, {
+ *   width: 50,
+ *   placeholder: "email@example.com",
+ *   backgroundColor: "#1a1a1a",
+ *   textColor: "white",
+ *   focusedBackgroundColor: "#2a2a2a",
+ *   maxLength: 100
+ * })
+ *
+ * emailInput.on(InputRenderableEvents.ENTER, () => {
+ *   console.log("Submitted:", emailInput.value)
+ * })
+ *
+ * emailInput.on(InputRenderableEvents.INPUT, () => {
+ *   console.log("Value changed:", emailInput.value)
+ * })
+ * ```
+ *
+ * @public
+ */
 export class InputRenderable extends Renderable {
   protected _focusable: boolean = true
 

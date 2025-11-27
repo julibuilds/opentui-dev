@@ -7,29 +7,106 @@ import type { OptimizedBuffer } from "../buffer"
 import type { SimpleHighlight } from "../lib/tree-sitter/types"
 import { treeSitterToTextChunks } from "../lib/tree-sitter-styled-text"
 
+/**
+ * Configuration options for {@link CodeRenderable}.
+ *
+ * @public
+ */
 export interface CodeOptions extends TextBufferOptions {
+  /** The source code content to display. */
   content?: string
+  /** Programming language for syntax highlighting (e.g., "typescript", "python", "rust"). */
   filetype?: string
+  /** Syntax style theme defining colors for different token types. */
   syntaxStyle: SyntaxStyle
+  /** Custom Tree-sitter client for syntax highlighting. If not provided, uses global singleton. */
   treeSitterClient?: TreeSitterClient
+  /**
+   * Whether to enable concealing (hiding or transforming) certain syntax elements.
+   * @defaultValue true
+   */
   conceal?: boolean
+  /**
+   * Whether to show plain unstyled text before syntax highlighting completes.
+   * @defaultValue true
+   * @remarks
+   * When false, nothing is rendered until highlighting finishes. Useful for preventing flash of unstyled content.
+   */
   drawUnstyledText?: boolean
+  /**
+   * Whether the code is being streamed incrementally.
+   * @defaultValue false
+   * @remarks
+   * In streaming mode, partial highlighting is applied using cached results for better performance.
+   */
   streaming?: boolean
 }
 
+/**
+ * A renderable for displaying syntax-highlighted source code.
+ *
+ * @remarks
+ * CodeRenderable extends {@link TextBufferRenderable} with Tree-sitter powered syntax highlighting.
+ * Key features:
+ *
+ * - Automatic syntax highlighting using Tree-sitter parsers
+ * - Support for 40+ programming languages
+ * - Customizable syntax themes via {@link SyntaxStyle}
+ * - Streaming mode for incremental content updates
+ * - Optional concealment of syntax elements
+ * - Fallback to plain text if filetype is unknown or highlighting fails
+ *
+ * The highlighting process is asynchronous and non-blocking. Use `drawUnstyledText` to control
+ * whether plain text is shown while highlighting is in progress.
+ *
+ * @example
+ * Basic usage:
+ * ```typescript
+ * const code = new CodeRenderable(ctx, {
+ *   content: 'function hello() { return "world"; }',
+ *   filetype: "typescript",
+ *   syntaxStyle: myTheme,
+ *   fg: "#d4d4d4",
+ *   bg: "#1e1e1e"
+ * });
+ * ```
+ *
+ * @example
+ * Streaming mode for real-time updates:
+ * ```typescript
+ * const code = new CodeRenderable(ctx, {
+ *   filetype: "python",
+ *   syntaxStyle: theme,
+ *   streaming: true,
+ *   drawUnstyledText: true
+ * });
+ *
+ * // Update content incrementally
+ * code.content = "def hello():";
+ * code.content = "def hello():\n    return 'world'";
+ * ```
+ *
+ * @public
+ */
 export class CodeRenderable extends TextBufferRenderable {
   private _content: string
   private _filetype?: string
   private _syntaxStyle: SyntaxStyle
+  /** Tracks whether highlighting is currently in progress. */
   private _isHighlighting: boolean = false
   private _treeSitterClient: TreeSitterClient
+  /** Indicates if content changed and needs re-highlighting. */
   private _highlightsDirty: boolean = false
+  /** Monotonically increasing ID to detect stale highlight results. */
   private _highlightSnapshotId: number = 0
   private _conceal: boolean
   private _drawUnstyledText: boolean
+  /** Controls whether the text buffer should be rendered. */
   private _shouldRenderTextBuffer: boolean = true
   private _streaming: boolean
+  /** Tracks if initial content was already shown in streaming mode. */
   private _hadInitialContent: boolean = false
+  /** Cached highlight results for streaming mode partial updates. */
   private _lastHighlights: SimpleHighlight[] = []
 
   protected _contentDefaultOptions = {
@@ -54,6 +131,7 @@ export class CodeRenderable extends TextBufferRenderable {
     this._highlightsDirty = this._content.length > 0
   }
 
+  /** The source code content. Setting this triggers re-highlighting. */
   get content(): string {
     return this._content
   }
@@ -65,6 +143,7 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /** The programming language for syntax highlighting (e.g., "typescript", "rust"). */
   get filetype(): string | undefined {
     return this._filetype
   }
@@ -76,6 +155,7 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /** The syntax highlighting theme. Changing this triggers re-highlighting. */
   get syntaxStyle(): SyntaxStyle {
     return this._syntaxStyle
   }
@@ -87,6 +167,7 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /** Whether syntax concealment (hiding/transforming elements) is enabled. */
   get conceal(): boolean {
     return this._conceal
   }
@@ -98,6 +179,13 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /**
+   * Whether to show unstyled text before highlighting completes.
+   *
+   * @remarks
+   * When true, plain text is displayed immediately and replaced with highlighted version.
+   * When false, nothing renders until highlighting finishes.
+   */
   get drawUnstyledText(): boolean {
     return this._drawUnstyledText
   }
@@ -109,6 +197,13 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /**
+   * Whether streaming mode is enabled for incremental content updates.
+   *
+   * @remarks
+   * In streaming mode, partial highlighting uses cached results for better performance
+   * when content changes frequently.
+   */
   get streaming(): boolean {
     return this._streaming
   }
@@ -122,6 +217,7 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /** The Tree-sitter client used for syntax highlighting. */
   get treeSitterClient(): TreeSitterClient {
     return this._treeSitterClient
   }
@@ -246,6 +342,12 @@ export class CodeRenderable extends TextBufferRenderable {
     }
   }
 
+  /**
+   * Gets the syntax highlights for a specific line.
+   *
+   * @param lineIdx - The line index (0-based)
+   * @returns Array of highlight ranges for the line
+   */
   public getLineHighlights(lineIdx: number) {
     return this.textBuffer.getLineHighlights(lineIdx)
   }

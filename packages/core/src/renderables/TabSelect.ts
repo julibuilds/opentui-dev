@@ -4,31 +4,65 @@ import { RGBA, parseColor, type ColorInput } from "../lib/RGBA"
 import type { KeyEvent } from "../lib/KeyHandler"
 import type { RenderContext } from "../types"
 
+/**
+ * An option item for {@link TabSelectRenderable}.
+ *
+ * @public
+ */
 export interface TabSelectOption {
+  /** Display name of the tab */
   name: string
+  /** Description shown below tabs when selected */
   description: string
+  /** Optional value associated with the tab */
   value?: any
 }
 
+/**
+ * Configuration options for {@link TabSelectRenderable}.
+ *
+ * @public
+ */
 export interface TabSelectRenderableOptions extends Omit<RenderableOptions<TabSelectRenderable>, "height"> {
+  /** Height is auto-calculated based on showUnderline and showDescription */
   height?: number
+  /** List of tabs */
   options?: TabSelectOption[]
+  /** Fixed width for each tab */
   tabWidth?: number
+  /** Background color when unfocused */
   backgroundColor?: ColorInput
+  /** Text color when unfocused */
   textColor?: ColorInput
+  /** Background color when focused */
   focusedBackgroundColor?: ColorInput
+  /** Text color when focused */
   focusedTextColor?: ColorInput
+  /** Background color for selected tab */
   selectedBackgroundColor?: ColorInput
+  /** Text color for selected tab */
   selectedTextColor?: ColorInput
+  /** Color for description text */
   selectedDescriptionColor?: ColorInput
+  /** Show scroll arrows when tabs overflow */
   showScrollArrows?: boolean
+  /** Show description below tabs */
   showDescription?: boolean
+  /** Show underline below selected tab */
   showUnderline?: boolean
+  /** Allow wrapping from last to first tab */
   wrapSelection?: boolean
 }
 
+/**
+ * Events emitted by {@link TabSelectRenderable}.
+ *
+ * @public
+ */
 export enum TabSelectRenderableEvents {
+  /** Fired when selection changes */
   SELECTION_CHANGED = "selectionChanged",
+  /** Fired when a tab is selected (Enter pressed) */
   ITEM_SELECTED = "itemSelected",
 }
 
@@ -46,6 +80,44 @@ function calculateDynamicHeight(showUnderline: boolean, showDescription: boolean
   return height
 }
 
+/**
+ * A horizontal tab selector component with keyboard navigation.
+ *
+ * @remarks
+ * TabSelectRenderable provides a horizontal row of tabs with the following features:
+ * - Horizontal keyboard navigation (left/right arrows, [ ] keys)
+ * - Optional underline decoration for selected tab
+ * - Optional description text below tabs
+ * - Auto-scrolling when tabs overflow the container
+ * - Scroll arrows for visual indication of overflow
+ * - Dynamic height based on enabled features
+ * - Customizable tab width and colors
+ *
+ * The component automatically calculates its height based on whether underline
+ * and description are enabled.
+ *
+ * @example
+ * ```typescript
+ * const tabs = new TabSelectRenderable(ctx, {
+ *   width: 60,
+ *   tabWidth: 15,
+ *   options: [
+ *     { name: "Home", description: "Home screen" },
+ *     { name: "Settings", description: "Application settings" },
+ *     { name: "About", description: "About this app" }
+ *   ],
+ *   showUnderline: true,
+ *   showDescription: true,
+ *   selectedBackgroundColor: "#3344ff"
+ * });
+ *
+ * tabs.on(TabSelectRenderableEvents.ITEM_SELECTED, (index, option) => {
+ *   console.log("Tab selected:", option.name);
+ * });
+ * ```
+ *
+ * @public
+ */
 export class TabSelectRenderable extends Renderable {
   protected _focusable: boolean = true
 

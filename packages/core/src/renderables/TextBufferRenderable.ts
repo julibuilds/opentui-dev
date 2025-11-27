@@ -9,33 +9,85 @@ import { MeasureMode } from "yoga-layout"
 import type { LineInfo } from "../zig"
 import { SyntaxStyle } from "../syntax-style"
 
+/**
+ * Configuration options for {@link TextBufferRenderable}.
+ *
+ * @public
+ */
 export interface TextBufferOptions extends RenderableOptions<TextBufferRenderable> {
+  /** Foreground (text) color. Accepts color string or RGBA instance. */
   fg?: string | RGBA
+  /** Background color. Accepts color string or RGBA instance. */
   bg?: string | RGBA
+  /** Background color for selected text. If undefined, uses default selection background. */
   selectionBg?: string | RGBA
+  /** Foreground color for selected text. If undefined, uses default foreground. */
   selectionFg?: string | RGBA
+  /** Whether this renderable can be selected with mouse or keyboard. @defaultValue true */
   selectable?: boolean
+  /** Text attributes bitfield (bold, italic, underline, etc.). @defaultValue 0 */
   attributes?: number
+  /** Text wrapping mode. @defaultValue "word" */
   wrapMode?: "none" | "char" | "word"
+  /** Custom tab indicator character or width. If string, displays as tab placeholder; if number, sets tab width. */
   tabIndicator?: string | number
+  /** Color for tab indicator characters. */
   tabIndicatorColor?: string | RGBA
 }
 
+/**
+ * Abstract base class for renderables that display read-only text using a TextBuffer.
+ *
+ * @remarks
+ * TextBufferRenderable provides high-performance text rendering with support for:
+ * - Text styling (colors, attributes like bold/italic/underline)
+ * - Text selection
+ * - Text wrapping (character, word, or none)
+ * - Custom tab indicators
+ * - Syntax highlighting through TextBuffer
+ *
+ * This is an abstract class that must be extended. Use {@link Text} for simple text display
+ * or create custom text-based renderables by extending this class.
+ *
+ * @example
+ * ```typescript
+ * class MyTextDisplay extends TextBufferRenderable {
+ *   constructor(ctx: RenderContext) {
+ *     super(ctx, { fg: "white", bg: "black", wrapMode: "word" });
+ *   }
+ * }
+ * ```
+ *
+ * @public
+ */
 export abstract class TextBufferRenderable extends Renderable implements LineInfoProvider {
+  /** Whether this renderable can be selected. */
   public selectable: boolean = true
 
+  /** Default foreground color for text. */
   protected _defaultFg: RGBA
+  /** Default background color. */
   protected _defaultBg: RGBA
+  /** Default text attributes bitfield. */
   protected _defaultAttributes: number
+  /** Background color for selected text, or undefined for default. */
   protected _selectionBg: RGBA | undefined
+  /** Foreground color for selected text, or undefined to inherit. */
   protected _selectionFg: RGBA | undefined
+  /** Current text wrapping mode. */
   protected _wrapMode: "none" | "char" | "word" = "word"
+  /** Cached local selection bounds from last selection change. */
   protected lastLocalSelection: LocalSelectionBounds | null = null
+  /** Custom tab indicator (character or width). */
   protected _tabIndicator?: string | number
+  /** Color for tab indicator. */
   protected _tabIndicatorColor?: RGBA
 
+  /** The underlying text storage and styling system. */
   protected textBuffer: TextBuffer
+  /** View layer that handles layout, wrapping, and viewport management. */
   protected textBufferView: TextBufferView
+  /** Cached line layout information. */
   protected _lineInfo: LineInfo = {
     lineStarts: [],
     lineWidths: [],
@@ -98,26 +150,54 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     this.updateTextInfo()
   }
 
+  /**
+   * Line layout information for this text buffer.
+   *
+   * @remarks
+   * Provides data about line starts, widths, and wrapping used by components like {@link LineNumberRenderable}.
+   */
   public get lineInfo(): LineInfo {
     return this.textBufferView.logicalLineInfo
   }
 
+  /**
+   * Total number of logical lines in the buffer.
+   *
+   * @remarks
+   * This is the count of newline-delimited lines, not visual lines after wrapping.
+   */
   public get lineCount(): number {
     return this.textBuffer.getLineCount()
   }
 
+  /**
+   * Current vertical scroll offset.
+   *
+   * @remarks
+   * TextBufferRenderable doesn't scroll by default (always returns 0).
+   * Override in subclasses that support scrolling.
+   */
   public get scrollY(): number {
     return 0
   }
 
+  /**
+   * The complete text content as a plain string without styling.
+   */
   get plainText(): string {
     return this.textBuffer.getPlainText()
   }
 
+  /**
+   * Total character length of the text buffer.
+   */
   get textLength(): number {
     return this.textBuffer.length
   }
 
+  /**
+   * Default foreground (text) color.
+   */
   get fg(): RGBA {
     return this._defaultFg
   }
@@ -342,6 +422,15 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     this.yogaNode.setMeasureFunc(measureFunc)
   }
 
+  /**
+   * Determines if a selection gesture should start at the given coordinates.
+   *
+   * @param x - Global X coordinate
+   * @param y - Global Y coordinate
+   * @returns `true` if the coordinates are within this renderable's bounds and it's selectable
+   *
+   * @internal
+   */
   shouldStartSelection(x: number, y: number): boolean {
     if (!this.selectable) return false
 
@@ -351,6 +440,14 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     return localX >= 0 && localX < this.width && localY >= 0 && localY < this.height
   }
 
+  /**
+   * Handles selection changes from the global selection system.
+   *
+   * @param selection - The new global selection state, or null to clear
+   * @returns `true` if this renderable has an active selection after the change
+   *
+   * @internal
+   */
   onSelectionChanged(selection: Selection | null): boolean {
     const localSelection = convertGlobalToLocalSelection(selection, this.x, this.y)
     this.lastLocalSelection = localSelection
@@ -364,14 +461,29 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     return this.hasSelection()
   }
 
+  /**
+   * Gets the currently selected text as a plain string.
+   *
+   * @returns The selected text, or empty string if no selection
+   */
   getSelectedText(): string {
     return this.textBufferView.getSelectedText()
   }
 
+  /**
+   * Checks if any text is currently selected.
+   *
+   * @returns `true` if there is an active selection
+   */
   hasSelection(): boolean {
     return this.textBufferView.hasSelection()
   }
 
+  /**
+   * Gets the current selection range as character offsets.
+   *
+   * @returns Object with `start` and `end` offsets, or null if no selection
+   */
   getSelection(): { start: number; end: number } | null {
     return this.textBufferView.getSelection()
   }

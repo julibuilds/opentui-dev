@@ -11,17 +11,63 @@ import {
 const defaultThumbBackgroundColor = RGBA.fromHex("#9a9ea3")
 const defaultTrackBackgroundColor = RGBA.fromHex("#252527")
 
+/**
+ * Configuration options for {@link SliderRenderable}.
+ *
+ * @public
+ */
 export interface SliderOptions extends RenderableOptions<SliderRenderable> {
+  /** Orientation of the slider */
   orientation: "vertical" | "horizontal"
+  /** Current value (between min and max) */
   value?: number
+  /** Minimum value */
   min?: number
+  /** Maximum value */
   max?: number
+  /** Size of the viewport (affects thumb size) */
   viewPortSize?: number
+  /** Background color for the track */
   backgroundColor?: ColorInput
+  /** Foreground color for the thumb */
   foregroundColor?: ColorInput
+  /** Callback invoked when value changes */
   onChange?: (value: number) => void
 }
 
+/**
+ * A draggable slider component with sub-pixel precision rendering.
+ *
+ * @remarks
+ * SliderRenderable provides a visual slider control with the following features:
+ * - Vertical or horizontal orientation
+ * - Sub-pixel precision using half-block characters (▀▄▌▐)
+ * - Mouse drag interaction
+ * - Configurable value range (min/max)
+ * - Viewport size affects thumb size (larger viewport = larger thumb)
+ * - Smooth dragging with offset tracking
+ * - Click-to-position support
+ *
+ * The slider uses a virtual coordinate system (2x resolution) for smooth rendering
+ * and then renders using Unicode half-block characters for sub-character precision.
+ *
+ * @example
+ * ```typescript
+ * const slider = new SliderRenderable(ctx, {
+ *   orientation: "horizontal",
+ *   width: 20,
+ *   height: 1,
+ *   min: 0,
+ *   max: 100,
+ *   value: 50,
+ *   onChange: (value) => {
+ *     console.log("Slider value:", value);
+ *   }
+ * });
+ * ```
+ *
+ * @public
+ */
 export class SliderRenderable extends Renderable {
   public readonly orientation: "vertical" | "horizontal"
   private _value: number
