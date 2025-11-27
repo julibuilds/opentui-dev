@@ -298,6 +298,7 @@ export class LineNumberRenderable extends Renderable {
   private _minWidth: number
   /** Right padding in characters. */
   private _paddingRight: number
+  private _isDestroying: boolean = false
 
   constructor(ctx: RenderContext, options: LineNumberOptions) {
     super(ctx, {
@@ -334,12 +335,10 @@ export class LineNumberRenderable extends Renderable {
   private setTarget(target: Renderable & LineInfoProvider): void {
     if (this.target === target) return
 
-    // Remove old target if it exists
     if (this.target) {
       super.remove(this.target.id)
     }
 
-    // Remove old gutter if it exists
     if (this.gutter) {
       super.remove(this.gutter.id)
       this.gutter = null
@@ -347,7 +346,6 @@ export class LineNumberRenderable extends Renderable {
 
     this.target = target
 
-    // Create new gutter
     this.gutter = new GutterRenderable(this.ctx, this.target, {
       fg: this._fg,
       bg: this._bg,
@@ -359,7 +357,6 @@ export class LineNumberRenderable extends Renderable {
       buffered: true,
     })
 
-    // Add in correct order: gutter first, then target
     super.add(this.gutter)
     super.add(this.target)
   }
@@ -377,6 +374,11 @@ export class LineNumberRenderable extends Renderable {
 
   // Override remove to prevent removing gutter/target directly
   public override remove(id: string): void {
+    if (this._isDestroying) {
+      super.remove(id)
+      return
+    }
+
     if (this.gutter && id === this.gutter.id) {
       throw new Error("LineNumberRenderable: Cannot remove gutter directly.")
     }
@@ -388,17 +390,12 @@ export class LineNumberRenderable extends Renderable {
 
   // Override destroyRecursively to properly clean up internal components
   public override destroyRecursively(): void {
-    // Manually destroy gutter and target
-    if (this.gutter) {
-      this.gutter.destroy()
-      this.gutter = null
-    }
-    if (this.target) {
-      this.target.destroy()
-      this.target = null
-    }
-    // Now destroy ourselves
-    this.destroy()
+    this._isDestroying = true
+
+    super.destroyRecursively()
+
+    this.gutter = null
+    this.target = null
   }
 
   public clearTarget(): void {

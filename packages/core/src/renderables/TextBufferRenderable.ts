@@ -87,14 +87,6 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
   protected textBuffer: TextBuffer
   /** View layer that handles layout, wrapping, and viewport management. */
   protected textBufferView: TextBufferView
-  /** Cached line layout information. */
-  protected _lineInfo: LineInfo = {
-    lineStarts: [],
-    lineWidths: [],
-    maxLineWidth: 0,
-    lineSources: [],
-    lineWraps: [],
-  }
 
   protected _defaultOptions = {
     fg: RGBA.fromValues(1, 1, 1, 1),
@@ -144,7 +136,7 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     }
 
     if (this._wrapMode !== "none" && this.width > 0) {
-      this.updateWrapWidth(this.width)
+      this.textBufferView.setWrapWidth(this.width)
     }
 
     this.updateTextInfo()
@@ -278,7 +270,7 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
       this._wrapMode = value
       this.textBufferView.setWrapMode(this._wrapMode)
       if (value !== "none" && this.width > 0) {
-        this.updateWrapWidth(this.width)
+        this.textBufferView.setWrapWidth(this.width)
       }
       // Changing wrap mode can change dimensions, so mark yoga node dirty to trigger re-measurement
       this.yogaNode.markDirty()
@@ -317,12 +309,8 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
 
   protected onResize(width: number, height: number): void {
     // Update viewport size to match renderable dimensions
+    // Note: setViewportSize automatically updates wrap_width via setViewport (see text-buffer-view.zig:178)
     this.textBufferView.setViewportSize(width, height)
-
-    // Update wrap width if wrapping is enabled
-    if (this._wrapMode !== "none" && width > 0) {
-      this.updateWrapWidth(width)
-    }
 
     if (this.lastLocalSelection) {
       const changed = this.updateLocalSelection(this.lastLocalSelection)
@@ -364,20 +352,6 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     this.requestRender()
   }
 
-  private updateLineInfo(): void {
-    const lineInfo = this.textBufferView.logicalLineInfo
-    this._lineInfo.lineStarts = lineInfo.lineStarts
-    this._lineInfo.lineWidths = lineInfo.lineWidths
-    this._lineInfo.maxLineWidth = lineInfo.maxLineWidth
-    this._lineInfo.lineSources = lineInfo.lineSources
-    this._lineInfo.lineWraps = lineInfo.lineWraps
-  }
-
-  private updateWrapWidth(width: number): void {
-    this.textBufferView.setWrapWidth(width)
-    this.updateLineInfo()
-  }
-
   // Undefined = 0,
   // Exactly = 1,
   // AtMost = 2
@@ -388,9 +362,17 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
       height: number,
       heightMode: MeasureMode,
     ): { width: number; height: number } => {
-      // Use a reasonable default for NaN/undefined height to allow measuring content
-      // This happens when Yoga calls measure with height/widthMode="Undefined" (0)
-      const effectiveWidth = isNaN(width) ? 1 : width
+      // When widthMode is Undefined, Yoga is asking for the intrinsic/natural width
+      // Pass width=0 to measureForDimensions to signal we want max-content (no wrapping)
+      // The Zig code treats width=0 with wrap_mode != none as null wrap_width,
+      // which triggers no-wrap mode and returns iter_mod.getMaxLineWidth()
+      let effectiveWidth: number
+      if (widthMode === MeasureMode.Undefined || isNaN(width)) {
+        effectiveWidth = 0
+      } else {
+        effectiveWidth = width
+      }
+
       const effectiveHeight = isNaN(height) ? 1 : height
 
       const measureResult = this.textBufferView.measureForDimensions(
@@ -400,9 +382,6 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
 
       const measuredWidth = measureResult ? Math.max(1, measureResult.maxWidth) : 1
       const measuredHeight = measureResult ? Math.max(1, measureResult.lineCount) : 1
-
-      // TODO: still needed??
-      this.updateLineInfo()
 
       if (widthMode === MeasureMode.AtMost && this._positionType !== "absolute") {
         return {
