@@ -130,3 +130,44 @@ Use `@internal` for non-public exports that shouldn't be documented:
  * @internal
  */
 ```
+
+## Documentation Generation
+
+### Claude-Optimized Docs
+
+The `/docs` slash command queries optimized API documentation. Generated docs are in `docs/claude/`:
+
+| File | Contents |
+|------|----------|
+| `core.md` | @opentui/core - Components, styling, types, enums, functions |
+| `react.md` | @opentui/react - Hooks, React components, JSX types |
+
+### Regenerating Docs
+
+After TSDoc changes, regenerate the documentation:
+
+```bash
+# Generate all doc formats
+bun run docs
+
+# Generate only Claude-optimized docs
+bun run docs:claude
+```
+
+### Pipeline Architecture
+
+```
+TypeScript Source → TypeDoc JSON → transform-docs.ts → Optimized Markdown
+```
+
+Key files:
+- `typedoc.claude.json` - TypeDoc config for JSON extraction
+- `dev/scripts/transform-docs.ts` - Custom transformer script
+- `.claude/commands/docs.md` - Slash command for querying docs
+
+### Features
+
+- **Type expansion**: Shows `"single" | "double" | "rounded"` instead of `BorderStyle`
+- **Inlined options**: All component properties in tables with descriptions
+- **Categorized**: Components, Hooks, Styling, Animation, Input, Types, Enums
+- **Single-file search**: Use grep to find any API in one file
