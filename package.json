@@ -11,7 +11,8 @@
     "knip": "knip",
     "docs:typedoc": "typedoc",
     "docs:tsdoc": "bash dev/scripts/generate-tsdoc.sh",
-    "docs": "bun run docs:typedoc && bun run docs:tsdoc"
+    "docs:claude": "typedoc --options typedoc.claude.json && bun dev/scripts/transform-docs.ts",
+    "docs": "bun run docs:typedoc && bun run docs:tsdoc && bun run docs:claude"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.7",
