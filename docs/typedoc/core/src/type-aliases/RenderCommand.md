@@ -6,4 +6,4 @@
 
 # Type Alias: RenderCommand
 
-> **RenderCommand** = `RenderCommandPushScissorRect` \| `RenderCommandPopScissorRect` \| `RenderCommandRender`
+> **RenderCommand** = `RenderCommandPushScissorRect` \| `RenderCommandPopScissorRect` \| `RenderCommandRender` \| `RenderCommandPushOpacity` \| `RenderCommandPopOpacity`

@@ -165,6 +165,16 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_isDestroyed`](Renderable.md#_isdestroyed)
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -172,6 +182,16 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`_liveCount`](Renderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_opacity`](Renderable.md#_opacity)
 
 ***
 
@@ -477,7 +497,7 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1467,6 +1487,36 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`opacity`](Renderable.md#opacity)
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2223,11 +2273,11 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -2331,7 +2381,7 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 

@@ -2,17 +2,49 @@
 
 ***
 
-[opentui-dev](../../../README.md) / [core/src](../README.md) / ScrollBarOptions
+[opentui-dev](../../../README.md) / [core/src](../README.md) / DiffRenderableOptions
 
-# Interface: ScrollBarOptions
+# Interface: DiffRenderableOptions
 
-Configuration options for [ScrollBarRenderable](../classes/ScrollBarRenderable.md).
+Configuration options for [DiffRenderable](../classes/DiffRenderable.md).
 
 ## Extends
 
-- [`RenderableOptions`](RenderableOptions.md)\<[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)\>
+- [`RenderableOptions`](RenderableOptions.md)\<[`DiffRenderable`](../classes/DiffRenderable.md)\>
 
 ## Properties
+
+### addedBg?
+
+> `optional` **addedBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Background color for added lines in gutter
+
+***
+
+### addedContentBg?
+
+> `optional` **addedContentBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Background color for added lines in content area
+
+***
+
+### addedLineNumberBg?
+
+> `optional` **addedLineNumberBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Line number background color for added lines
+
+***
+
+### addedSignColor?
+
+> `optional` **addedSignColor**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Color for the "+" sign on added lines
+
+***
 
 ### alignItems?
 
@@ -35,14 +67,6 @@ Override parent's alignItems for this item
 #### Inherited from
 
 [`LayoutOptions`](LayoutOptions.md).[`alignSelf`](LayoutOptions.md#alignself)
-
-***
-
-### arrowOptions?
-
-> `optional` **arrowOptions**: `Omit`\<[`ArrowOptions`](ArrowOptions.md), `"direction"`\>
-
-Options for the arrow buttons
 
 ***
 
@@ -70,6 +94,38 @@ Whether to use an offscreen buffer for rendering (improves performance for compl
 
 ***
 
+### conceal?
+
+> `optional` **conceal**: `boolean`
+
+Whether to conceal special characters
+
+***
+
+### contextBg?
+
+> `optional` **contextBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Background color for context lines in gutter
+
+***
+
+### contextContentBg?
+
+> `optional` **contextContentBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Background color for context lines in content area
+
+***
+
+### diff?
+
+> `optional` **diff**: `string`
+
+The unified diff string to display
+
+***
+
 ### enableLayout?
 
 > `optional` **enableLayout**: `boolean`
@@ -79,6 +135,22 @@ Whether to enable layout calculation (default: true)
 #### Inherited from
 
 [`LayoutOptions`](LayoutOptions.md).[`enableLayout`](LayoutOptions.md#enablelayout)
+
+***
+
+### fg?
+
+> `optional` **fg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Foreground text color
+
+***
+
+### filetype?
+
+> `optional` **filetype**: `string`
+
+File type for syntax highlighting
 
 ***
 
@@ -187,6 +259,22 @@ Position from left edge (requires position: "absolute")
 #### Inherited from
 
 [`LayoutOptions`](LayoutOptions.md).[`left`](LayoutOptions.md#left)
+
+***
+
+### lineNumberBg?
+
+> `optional` **lineNumberBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Line number gutter background color
+
+***
+
+### lineNumberFg?
+
+> `optional` **lineNumberFg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Line number foreground color
 
 ***
 
@@ -310,24 +398,6 @@ Minimum width constraint
 
 ***
 
-### onChange()?
-
-> `optional` **onChange**: (`position`) => `void`
-
-Callback invoked when scroll position changes
-
-#### Parameters
-
-##### position
-
-`number`
-
-#### Returns
-
-`void`
-
-***
-
 ### onKeyDown()?
 
 > `optional` **onKeyDown**: (`key`) => `void`
@@ -360,7 +430,7 @@ Catch-all handler for any mouse event
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -386,7 +456,7 @@ Handler for mouse button press
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -412,7 +482,7 @@ Handler for mouse drag (movement with button pressed)
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -438,7 +508,7 @@ Handler for end of mouse drag
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -464,7 +534,7 @@ Handler for mouse drop (after drag)
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -490,7 +560,7 @@ Handler for mouse movement (without button pressed)
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -516,7 +586,7 @@ Handler for mouse leaving the renderable's bounds
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -542,7 +612,7 @@ Handler for mouse entering the renderable's bounds
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -568,7 +638,7 @@ Handler for mouse scroll events
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -594,7 +664,7 @@ Handler for mouse button release
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -620,7 +690,7 @@ Handler for paste events (when renderable is focused)
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### event
 
@@ -646,7 +716,7 @@ Handler called when the renderable's size changes
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 #### Returns
 
@@ -665,14 +735,6 @@ Handler called when the renderable's size changes
 #### Inherited from
 
 [`RenderableOptions`](RenderableOptions.md).[`opacity`](RenderableOptions.md#opacity)
-
-***
-
-### orientation
-
-> **orientation**: `"vertical"` \| `"horizontal"`
-
-Orientation of the scrollbar
 
 ***
 
@@ -760,6 +822,38 @@ Position type: "relative" (default) or "absolute"
 
 ***
 
+### removedBg?
+
+> `optional` **removedBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Background color for removed lines in gutter
+
+***
+
+### removedContentBg?
+
+> `optional` **removedContentBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Background color for removed lines in content area
+
+***
+
+### removedLineNumberBg?
+
+> `optional` **removedLineNumberBg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Line number background color for removed lines
+
+***
+
+### removedSignColor?
+
+> `optional` **removedSignColor**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Color for the "-" sign on removed lines
+
+***
+
 ### renderAfter()?
 
 > `optional` **renderAfter**: (`this`, `buffer`, `deltaTime`) => `void`
@@ -770,7 +864,7 @@ Hook called after the renderable's render method
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### buffer
 
@@ -800,7 +894,7 @@ Hook called before the renderable's render method
 
 ##### this
 
-[`ScrollBarRenderable`](../classes/ScrollBarRenderable.md)
+[`DiffRenderable`](../classes/DiffRenderable.md)
 
 ##### buffer
 
@@ -832,11 +926,35 @@ Position from right edge (requires position: "absolute")
 
 ***
 
-### showArrows?
+### selectionBg?
 
-> `optional` **showArrows**: `boolean`
+> `optional` **selectionBg**: `string` \| [`RGBA`](../classes/RGBA.md)
 
-Show arrow buttons at each end
+Selection background color
+
+***
+
+### selectionFg?
+
+> `optional` **selectionFg**: `string` \| [`RGBA`](../classes/RGBA.md)
+
+Selection foreground color
+
+***
+
+### showLineNumbers?
+
+> `optional` **showLineNumbers**: `boolean`
+
+Whether to show line numbers
+
+***
+
+### syntaxStyle?
+
+> `optional` **syntaxStyle**: [`SyntaxStyle`](../classes/SyntaxStyle.md)
+
+Syntax highlighting style configuration
 
 ***
 
@@ -852,11 +970,19 @@ Position from top edge (requires position: "absolute")
 
 ***
 
-### trackOptions?
+### treeSitterClient?
 
-> `optional` **trackOptions**: `Partial`\<[`SliderOptions`](SliderOptions.md)\>
+> `optional` **treeSitterClient**: [`TreeSitterClient`](../classes/TreeSitterClient.md)
 
-Options for the slider track
+Tree-sitter client for syntax highlighting
+
+***
+
+### view?
+
+> `optional` **view**: `"unified"` \| `"split"`
+
+View mode: "unified" shows all changes in one column, "split" shows side-by-side
 
 ***
 
@@ -881,6 +1007,14 @@ Width in cells, "auto", or percentage (e.g., "50%")
 #### Inherited from
 
 [`RenderableOptions`](RenderableOptions.md).[`width`](RenderableOptions.md#width)
+
+***
+
+### wrapMode?
+
+> `optional` **wrapMode**: `"none"` \| `"char"` \| `"word"`
+
+Text wrapping mode
 
 ***
 

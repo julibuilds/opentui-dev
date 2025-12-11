@@ -254,6 +254,14 @@ Align children along main axis: "flex-start", "center", "flex-end", "space-betwe
 
 ***
 
+### keyAliasMap?
+
+> `optional` **keyAliasMap**: `KeyAliasMap`
+
+Custom key alias mappings for remapping keys
+
+***
+
 ### keyBindings?
 
 > `optional` **keyBindings**: [`KeyBinding`](../type-aliases/KeyBinding.md)[]
@@ -783,6 +791,16 @@ Callback invoked when textarea is submitted
 #### Returns
 
 `void`
+
+***
+
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+`EditBufferOptions.opacity`
 
 ***
 

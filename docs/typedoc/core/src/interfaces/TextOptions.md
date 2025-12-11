@@ -682,6 +682,16 @@ Handler called when the renderable's size changes
 
 ***
 
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+[`TextBufferOptions`](TextBufferOptions.md).[`opacity`](TextBufferOptions.md#opacity)
+
+***
+
 ### overflow?
 
 > `optional` **overflow**: [`OverflowString`](../type-aliases/OverflowString.md)

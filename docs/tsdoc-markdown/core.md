@@ -42,6 +42,9 @@
 - [clearDebounceScope](#gear-cleardebouncescope)
 - [clearAllDebounces](#gear-clearalldebounces)
 - [getParsers](#gear-getparsers)
+- [isBunfsPath](#gear-isbunfspath)
+- [getBunfsRootPath](#gear-getbunfsrootpath)
+- [normalizeBunfsPath](#gear-normalizebunfspath)
 - [addDefaultParsers](#gear-adddefaultparsers)
 - [createTextAttributes](#gear-createtextattributes)
 - [visualizeRenderableTree](#gear-visualizerenderabletree)
@@ -85,14 +88,16 @@
 - [TabSelect](#gear-tabselect)
 - [FrameBuffer](#gear-framebuffer)
 - [vstyles.bold](#gear-vstyles.bold)
+- [mergeKeyAliases](#gear-mergekeyaliases)
+- [mergeKeyBindings](#gear-mergekeybindings)
+- [getKeyBindingKey](#gear-getkeybindingkey)
+- [buildKeyBindingsMap](#gear-buildkeybindingsmap)
 - [getObjectsInViewport](#gear-getobjectsinviewport)
 - [isCapabilityResponse](#gear-iscapabilityresponse)
 - [isPixelResolutionResponse](#gear-ispixelresolutionresponse)
 - [parsePixelResolution](#gear-parsepixelresolution)
+- [buildKittyKeyboardFlags](#gear-buildkittykeyboardflags)
 - [createCliRenderer](#gear-createclirenderer)
-- [mergeKeyBindings](#gear-mergekeybindings)
-- [getKeyBindingKey](#gear-getkeybindingkey)
-- [buildKeyBindingsMap](#gear-buildkeybindingsmap)
 - [isTextNodeRenderable](#gear-istextnoderenderable)
 - [isStyledText](#gear-isstyledtext)
 - [stringToStyledText](#gear-stringtostyledtext)
@@ -477,6 +482,27 @@ Clears all active debounce timers across all scopes
 | ---------- | ---------- |
 | `getParsers` | `() => FiletypeParserOptions[]` |
 
+### :gear: isBunfsPath
+
+| Function | Type |
+| ---------- | ---------- |
+| `isBunfsPath` | `(path: string) => boolean` |
+
+### :gear: getBunfsRootPath
+
+| Function | Type |
+| ---------- | ---------- |
+| `getBunfsRootPath` | `() => string` |
+
+### :gear: normalizeBunfsPath
+
+Normalizes a path to the embedded root.
+Flattens directory structure to ensure file exists at root.
+
+| Function | Type |
+| ---------- | ---------- |
+| `normalizeBunfsPath` | `(fileName: string) => string` |
+
 ### :gear: addDefaultParsers
 
 | Function | Type |
@@ -547,7 +573,7 @@ Clears all active debounce timers across all scopes
 
 | Function | Type |
 | ---------- | ---------- |
-| `createTerminalPalette` | `(stdin: ReadStream, stdout: WriteStream, writeFn?: WriteFunction or undefined) => TerminalPaletteDetector` |
+| `createTerminalPalette` | `(stdin: ReadStream, stdout: WriteStream, writeFn?: WriteFunction or undefined, isLegacyTmux?: boolean or undefined) => TerminalPaletteDetector` |
 
 ### :gear: validateOptions
 
@@ -747,6 +773,30 @@ to a descendant renderable identified by ID.
 | ---------- | ---------- |
 | `vstyles.bold` | `(...children: (string or TextNodeRenderable)[]) => TextNodeRenderable` |
 
+### :gear: mergeKeyAliases
+
+| Function | Type |
+| ---------- | ---------- |
+| `mergeKeyAliases` | `(defaults: KeyAliasMap, custom: KeyAliasMap) => KeyAliasMap` |
+
+### :gear: mergeKeyBindings
+
+| Function | Type |
+| ---------- | ---------- |
+| `mergeKeyBindings` | `<Action extends string>(defaults: KeyBinding<Action>[], custom: KeyBinding<Action>[]) => KeyBinding<Action>[]` |
+
+### :gear: getKeyBindingKey
+
+| Function | Type |
+| ---------- | ---------- |
+| `getKeyBindingKey` | `<Action extends string>(binding: KeyBinding<Action>) => string` |
+
+### :gear: buildKeyBindingsMap
+
+| Function | Type |
+| ---------- | ---------- |
+| `buildKeyBindingsMap` | `<Action extends string>(bindings: KeyBinding<Action>[], aliasMap?: KeyAliasMap or undefined) => Map<string, Action>` |
+
 ### :gear: getObjectsInViewport
 
 Returns objects that overlap with the viewport bounds.
@@ -795,6 +845,23 @@ Returns { width, height } or null if not a valid resolution response.
 | ---------- | ---------- |
 | `parsePixelResolution` | `(sequence: string) => { width: number; height: number; } or null` |
 
+### :gear: buildKittyKeyboardFlags
+
+Builds Kitty keyboard protocol flags based on configuration.
+
+| Function | Type |
+| ---------- | ---------- |
+| `buildKittyKeyboardFlags` | `(config: { events?: boolean or undefined; } or null or undefined) => number` |
+
+Parameters:
+
+* `config`: - Kitty keyboard configuration object (null/undefined = disabled)
+
+
+Returns:
+
+The combined flags value (0 = disabled, >0 = enabled)
+
 ### :gear: createCliRenderer
 
 Creates and initializes a CLI renderer instance.
@@ -835,24 +902,6 @@ renderer.root.add(box)
 renderer.start()
 ```
 
-
-### :gear: mergeKeyBindings
-
-| Function | Type |
-| ---------- | ---------- |
-| `mergeKeyBindings` | `<Action extends string>(defaults: KeyBinding<Action>[], custom: KeyBinding<Action>[]) => KeyBinding<Action>[]` |
-
-### :gear: getKeyBindingKey
-
-| Function | Type |
-| ---------- | ---------- |
-| `getKeyBindingKey` | `<Action extends string>(binding: KeyBinding<Action>) => string` |
-
-### :gear: buildKeyBindingsMap
-
-| Function | Type |
-| ---------- | ---------- |
-| `buildKeyBindingsMap` | `<Action extends string>(bindings: KeyBinding<Action>[]) => Map<string, Action>` |
 
 ### :gear: isTextNodeRenderable
 
@@ -1380,6 +1429,7 @@ renderer.setFrameCallback(async (deltaTime) => {
 - [BorderCharArrays](#gear-borderchararrays)
 - [nonAlphanumericKeys](#gear-nonalphanumerickeys)
 - [envRegistry](#gear-envregistry)
+- [defaultKeyAliases](#gear-defaultkeyaliases)
 - [capture](#gear-capture)
 - [engine](#gear-engine)
 - [TextAttributes](#gear-textattributes)
@@ -1423,6 +1473,12 @@ renderer.setFrameCallback(async (deltaTime) => {
 | Constant | Type |
 | ---------- | ---------- |
 | `envRegistry` | `Record<string, EnvVarConfig>` |
+
+### :gear: defaultKeyAliases
+
+| Constant | Type |
+| ---------- | ---------- |
+| `defaultKeyAliases` | `KeyAliasMap` |
 
 ### :gear: capture
 
@@ -1799,6 +1855,7 @@ Whether text can be selected.
 - [capsLock](#gear-capslock)
 - [numLock](#gear-numlock)
 - [baseCode](#gear-basecode)
+- [repeated](#gear-repeated)
 
 #### :gear: name
 
@@ -1895,6 +1952,12 @@ Whether text can be selected.
 | Property | Type |
 | ---------- | ---------- |
 | `baseCode` | `number or undefined` |
+
+#### :gear: repeated
+
+| Property | Type |
+| ---------- | ---------- |
+| `repeated` | `boolean or undefined` |
 
 ## :factory: PasteEvent
 
@@ -2340,6 +2403,8 @@ incremental editing, and grapheme-aware operations.
 
 - [setText](#gear-settext)
 - [setTextOwned](#gear-settextowned)
+- [replaceText](#gear-replacetext)
+- [replaceTextOwned](#gear-replacetextowned)
 - [getLineCount](#gear-getlinecount)
 - [getText](#gear-gettext)
 - [insertChar](#gear-insertchar)
@@ -2389,15 +2454,39 @@ incremental editing, and grapheme-aware operations.
 
 #### :gear: setText
 
+Set text and completely reset the buffer state (clears history, resets add_buffer).
+Use this for initial text setting or when you want a clean slate.
+
 | Method | Type |
 | ---------- | ---------- |
-| `setText` | `(text: string, opts?: { history?: boolean or undefined; } or undefined) => void` |
+| `setText` | `(text: string) => void` |
 
 #### :gear: setTextOwned
 
+Set text using owned memory and completely reset the buffer state (clears history, resets add_buffer).
+The native code takes ownership of the memory.
+
 | Method | Type |
 | ---------- | ---------- |
-| `setTextOwned` | `(text: string, opts?: { history?: boolean or undefined; } or undefined) => void` |
+| `setTextOwned` | `(text: string) => void` |
+
+#### :gear: replaceText
+
+Replace text while preserving undo history (creates an undo point).
+Use this when you want the setText operation to be undoable.
+
+| Method | Type |
+| ---------- | ---------- |
+| `replaceText` | `(text: string) => void` |
+
+#### :gear: replaceTextOwned
+
+Replace text using owned memory while preserving undo history (creates an undo point).
+The native code takes ownership of the memory.
+
+| Method | Type |
+| ---------- | ---------- |
+| `replaceTextOwned` | `(text: string) => void` |
 
 #### :gear: getLineCount
 
@@ -2722,6 +2811,8 @@ incremental editing, and grapheme-aware operations.
 - [getNextWordBoundary](#gear-getnextwordboundary)
 - [getPrevWordBoundary](#gear-getprevwordboundary)
 - [getEOL](#gear-geteol)
+- [getVisualSOL](#gear-getvisualsol)
+- [getVisualEOL](#gear-getvisualeol)
 - [getLineInfo](#gear-getlineinfo)
 - [getLogicalLineInfo](#gear-getlogicallineinfo)
 - [setPlaceholderStyledText](#gear-setplaceholderstyledtext)
@@ -2867,6 +2958,18 @@ incremental editing, and grapheme-aware operations.
 | Method | Type |
 | ---------- | ---------- |
 | `getEOL` | `() => VisualCursor` |
+
+#### :gear: getVisualSOL
+
+| Method | Type |
+| ---------- | ---------- |
+| `getVisualSOL` | `() => VisualCursor` |
+
+#### :gear: getVisualEOL
+
+| Method | Type |
+| ---------- | ---------- |
+| `getVisualEOL` | `() => VisualCursor` |
 
 #### :gear: getLineInfo
 
@@ -3158,11 +3261,13 @@ panel.add(new TextRenderable(ctx, { content: "Hello!" }))
 - [setWrapWidth](#gear-setwrapwidth)
 - [setWrapMode](#gear-setwrapmode)
 - [setViewportSize](#gear-setviewportsize)
+- [setViewport](#gear-setviewport)
 - [getSelectedText](#gear-getselectedtext)
 - [getPlainText](#gear-getplaintext)
 - [setTabIndicator](#gear-settabindicator)
 - [setTabIndicatorColor](#gear-settabindicatorcolor)
 - [measureForDimensions](#gear-measurefordimensions)
+- [getVirtualLineCount](#gear-getvirtuallinecount)
 - [destroy](#gear-destroy)
 
 #### :gear: setSelection
@@ -3219,6 +3324,12 @@ panel.add(new TextRenderable(ctx, { content: "Hello!" }))
 | ---------- | ---------- |
 | `setViewportSize` | `(width: number, height: number) => void` |
 
+#### :gear: setViewport
+
+| Method | Type |
+| ---------- | ---------- |
+| `setViewport` | `(x: number, y: number, width: number, height: number) => void` |
+
 #### :gear: getSelectedText
 
 | Method | Type |
@@ -3248,6 +3359,12 @@ panel.add(new TextRenderable(ctx, { content: "Hello!" }))
 | Method | Type |
 | ---------- | ---------- |
 | `measureForDimensions` | `(width: number, height: number) => { lineCount: number; maxWidth: number; } or null` |
+
+#### :gear: getVirtualLineCount
+
+| Method | Type |
+| ---------- | ---------- |
+| `getVirtualLineCount` | `() => number` |
 
 #### :gear: destroy
 
@@ -3433,6 +3550,263 @@ A generic renderable that accepts a custom render function as a prop.
 This allows functional constructs to specify custom rendering behavior
 without needing to subclass Renderable.
 
+## :factory: LineNumberRenderable
+
+A renderable that displays line numbers in a gutter next to text content.
+
+Examples:
+
+```typescript
+const lineNumbers = new LineNumberRenderable(ctx, {
+  fg: "#888888",
+  bg: "#1e1e1e",
+  minWidth: 4
+});
+
+const code = new Code(ctx, {
+  content: "function main() {\n  return 42;\n}",
+  filetype: "typescript"
+});
+
+lineNumbers.add(code); // Add code as target
+
+// Highlight line 2 with same color for gutter and content
+lineNumbers.setLineColor(1, "#264f78");
+
+// Or use different colors for gutter and content
+lineNumbers.setLineColor(1, { gutter: "#264f78", content: "#1e3a5f" });
+
+// Add error marker on line 2
+lineNumbers.setLineSign(1, {
+  after: "●",
+  afterColor: "#ff0000"
+});
+```
+
+
+### Methods
+
+- [add](#gear-add)
+- [remove](#gear-remove)
+- [destroyRecursively](#gear-destroyrecursively)
+- [clearTarget](#gear-cleartarget)
+- [setLineColor](#gear-setlinecolor)
+- [clearLineColor](#gear-clearlinecolor)
+- [clearAllLineColors](#gear-clearalllinecolors)
+- [setLineColors](#gear-setlinecolors)
+- [getLineColors](#gear-getlinecolors)
+- [setLineSign](#gear-setlinesign)
+- [clearLineSign](#gear-clearlinesign)
+- [clearAllLineSigns](#gear-clearalllinesigns)
+- [setLineSigns](#gear-setlinesigns)
+- [getLineSigns](#gear-getlinesigns)
+- [setHideLineNumbers](#gear-sethidelinenumbers)
+- [getHideLineNumbers](#gear-gethidelinenumbers)
+- [setLineNumbers](#gear-setlinenumbers)
+- [getLineNumbers](#gear-getlinenumbers)
+
+#### :gear: add
+
+| Method | Type |
+| ---------- | ---------- |
+| `add` | `(child: Renderable) => number` |
+
+#### :gear: remove
+
+| Method | Type |
+| ---------- | ---------- |
+| `remove` | `(id: string) => void` |
+
+#### :gear: destroyRecursively
+
+| Method | Type |
+| ---------- | ---------- |
+| `destroyRecursively` | `() => void` |
+
+#### :gear: clearTarget
+
+| Method | Type |
+| ---------- | ---------- |
+| `clearTarget` | `() => void` |
+
+#### :gear: setLineColor
+
+Sets a background color for a specific line (0-indexed).
+
+| Method | Type |
+| ---------- | ---------- |
+| `setLineColor` | `(line: number, color: string or RGBA or LineColorConfig) => void` |
+
+Parameters:
+
+* `line`: - The line index (0-based)
+* `color`: - The background color to apply, or a 
+
+
+#### :gear: clearLineColor
+
+Removes the background color from a specific line.
+
+| Method | Type |
+| ---------- | ---------- |
+| `clearLineColor` | `(line: number) => void` |
+
+Parameters:
+
+* `line`: - The line index (0-based)
+
+
+#### :gear: clearAllLineColors
+
+Clears all custom line background colors.
+
+| Method | Type |
+| ---------- | ---------- |
+| `clearAllLineColors` | `() => void` |
+
+#### :gear: setLineColors
+
+Sets multiple line colors at once, replacing existing ones.
+
+| Method | Type |
+| ---------- | ---------- |
+| `setLineColors` | `(lineColors: Map<number, string or RGBA or LineColorConfig>) => void` |
+
+Parameters:
+
+* `lineColors`: - Map of line indices to colors or 
+
+
+#### :gear: getLineColors
+
+Gets the current maps of line colors.
+
+| Method | Type |
+| ---------- | ---------- |
+| `getLineColors` | `() => { gutter: Map<number, RGBA>; content: Map<number, RGBA>; }` |
+
+Returns:
+
+An object containing separate maps for gutter and content colors
+
+#### :gear: setLineSign
+
+Sets a decorative sign for a specific line.
+
+| Method | Type |
+| ---------- | ---------- |
+| `setLineSign` | `(line: number, sign: LineSign) => void` |
+
+Parameters:
+
+* `line`: - The line index (0-based)
+* `sign`: - The sign configuration
+
+
+Examples:
+
+```typescript
+// Add a breakpoint indicator
+lineNumbers.setLineSign(10, {
+  before: "●",
+  beforeColor: "#ff0000"
+});
+```
+
+
+#### :gear: clearLineSign
+
+Removes the sign from a specific line.
+
+| Method | Type |
+| ---------- | ---------- |
+| `clearLineSign` | `(line: number) => void` |
+
+Parameters:
+
+* `line`: - The line index (0-based)
+
+
+#### :gear: clearAllLineSigns
+
+Clears all line signs.
+
+| Method | Type |
+| ---------- | ---------- |
+| `clearAllLineSigns` | `() => void` |
+
+#### :gear: setLineSigns
+
+Sets multiple line signs at once, replacing existing ones.
+
+| Method | Type |
+| ---------- | ---------- |
+| `setLineSigns` | `(lineSigns: Map<number, LineSign>) => void` |
+
+Parameters:
+
+* `lineSigns`: - Map of line indices to signs
+
+
+#### :gear: getLineSigns
+
+Gets the current map of line signs.
+
+| Method | Type |
+| ---------- | ---------- |
+| `getLineSigns` | `() => Map<number, LineSign>` |
+
+#### :gear: setHideLineNumbers
+
+| Method | Type |
+| ---------- | ---------- |
+| `setHideLineNumbers` | `(hideLineNumbers: Set<number>) => void` |
+
+#### :gear: getHideLineNumbers
+
+| Method | Type |
+| ---------- | ---------- |
+| `getHideLineNumbers` | `() => Set<number>` |
+
+#### :gear: setLineNumbers
+
+| Method | Type |
+| ---------- | ---------- |
+| `setLineNumbers` | `(lineNumbers: Map<number, number>) => void` |
+
+#### :gear: getLineNumbers
+
+| Method | Type |
+| ---------- | ---------- |
+| `getLineNumbers` | `() => Map<number, number>` |
+
+## :factory: DiffRenderable
+
+A renderable that displays unified or split diff views with syntax highlighting.
+
+Examples:
+
+```typescript
+const diff = new DiffRenderable(ctx, {
+  diff: unifiedDiffString,
+  view: "split",
+  filetype: "typescript",
+  addedBg: "#22442244",
+  removedBg: "#44222244"
+});
+```
+
+
+### Methods
+
+- [destroyRecursively](#gear-destroyrecursively)
+
+#### :gear: destroyRecursively
+
+| Method | Type |
+| ---------- | ---------- |
+| `destroyRecursively` | `() => void` |
+
 ## :factory: InputRenderable
 
 A single-line text input component with cursor and keyboard support.
@@ -3505,208 +3879,13 @@ emailInput.on(InputRenderableEvents.INPUT, () => {
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `(key: string or KeyEvent) => boolean` |
+| `handleKeyPress` | `(key: KeyEvent) => boolean` |
 
 #### :gear: updateFromLayout
 
 | Method | Type |
 | ---------- | ---------- |
 | `updateFromLayout` | `() => void` |
-
-## :factory: LineNumberRenderable
-
-A renderable that displays line numbers in a gutter next to text content.
-
-Examples:
-
-```typescript
-const lineNumbers = new LineNumberRenderable(ctx, {
-  fg: "#888888",
-  bg: "#1e1e1e",
-  minWidth: 4
-});
-
-const code = new Code(ctx, {
-  content: "function main() {\n  return 42;\n}",
-  filetype: "typescript"
-});
-
-lineNumbers.add(code); // Add code as target
-
-// Highlight line 2
-lineNumbers.setLineColor(1, "#264f78");
-
-// Add error marker on line 2
-lineNumbers.setLineSign(1, {
-  after: "●",
-  afterColor: "#ff0000"
-});
-```
-
-
-### Methods
-
-- [add](#gear-add)
-- [remove](#gear-remove)
-- [destroyRecursively](#gear-destroyrecursively)
-- [clearTarget](#gear-cleartarget)
-- [setLineColor](#gear-setlinecolor)
-- [clearLineColor](#gear-clearlinecolor)
-- [clearAllLineColors](#gear-clearalllinecolors)
-- [setLineColors](#gear-setlinecolors)
-- [getLineColors](#gear-getlinecolors)
-- [setLineSign](#gear-setlinesign)
-- [clearLineSign](#gear-clearlinesign)
-- [clearAllLineSigns](#gear-clearalllinesigns)
-- [setLineSigns](#gear-setlinesigns)
-- [getLineSigns](#gear-getlinesigns)
-
-#### :gear: add
-
-| Method | Type |
-| ---------- | ---------- |
-| `add` | `(child: Renderable) => number` |
-
-#### :gear: remove
-
-| Method | Type |
-| ---------- | ---------- |
-| `remove` | `(id: string) => void` |
-
-#### :gear: destroyRecursively
-
-| Method | Type |
-| ---------- | ---------- |
-| `destroyRecursively` | `() => void` |
-
-#### :gear: clearTarget
-
-| Method | Type |
-| ---------- | ---------- |
-| `clearTarget` | `() => void` |
-
-#### :gear: setLineColor
-
-Sets a background color for a specific line (0-indexed).
-
-| Method | Type |
-| ---------- | ---------- |
-| `setLineColor` | `(line: number, color: string or RGBA) => void` |
-
-Parameters:
-
-* `line`: - The line index (0-based)
-* `color`: - The background color to apply
-
-
-#### :gear: clearLineColor
-
-Removes the background color from a specific line.
-
-| Method | Type |
-| ---------- | ---------- |
-| `clearLineColor` | `(line: number) => void` |
-
-Parameters:
-
-* `line`: - The line index (0-based)
-
-
-#### :gear: clearAllLineColors
-
-Clears all custom line background colors.
-
-| Method | Type |
-| ---------- | ---------- |
-| `clearAllLineColors` | `() => void` |
-
-#### :gear: setLineColors
-
-Sets multiple line colors at once, replacing existing ones.
-
-| Method | Type |
-| ---------- | ---------- |
-| `setLineColors` | `(lineColors: Map<number, string or RGBA>) => void` |
-
-Parameters:
-
-* `lineColors`: - Map of line indices to colors
-
-
-#### :gear: getLineColors
-
-Gets the current map of line colors.
-
-| Method | Type |
-| ---------- | ---------- |
-| `getLineColors` | `() => Map<number, RGBA>` |
-
-#### :gear: setLineSign
-
-Sets a decorative sign for a specific line.
-
-| Method | Type |
-| ---------- | ---------- |
-| `setLineSign` | `(line: number, sign: LineSign) => void` |
-
-Parameters:
-
-* `line`: - The line index (0-based)
-* `sign`: - The sign configuration
-
-
-Examples:
-
-```typescript
-// Add a breakpoint indicator
-lineNumbers.setLineSign(10, {
-  before: "●",
-  beforeColor: "#ff0000"
-});
-```
-
-
-#### :gear: clearLineSign
-
-Removes the sign from a specific line.
-
-| Method | Type |
-| ---------- | ---------- |
-| `clearLineSign` | `(line: number) => void` |
-
-Parameters:
-
-* `line`: - The line index (0-based)
-
-
-#### :gear: clearAllLineSigns
-
-Clears all line signs.
-
-| Method | Type |
-| ---------- | ---------- |
-| `clearAllLineSigns` | `() => void` |
-
-#### :gear: setLineSigns
-
-Sets multiple line signs at once, replacing existing ones.
-
-| Method | Type |
-| ---------- | ---------- |
-| `setLineSigns` | `(lineSigns: Map<number, LineSign>) => void` |
-
-Parameters:
-
-* `lineSigns`: - Map of line indices to signs
-
-
-#### :gear: getLineSigns
-
-Gets the current map of line signs.
-
-| Method | Type |
-| ---------- | ---------- |
-| `getLineSigns` | `() => Map<number, LineSign>` |
 
 ## :factory: SliderRenderable
 
@@ -3794,7 +3973,7 @@ scrollbar.scrollBy(0.5, "viewport"); // Scroll by half viewport
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `(key: string or KeyEvent) => boolean` |
+| `handleKeyPress` | `(key: KeyEvent) => boolean` |
 
 ### Properties
 
@@ -4162,6 +4341,8 @@ renderer.start()
 - [focusRenderable](#gear-focusrenderable)
 - [addToHitGrid](#gear-addtohitgrid)
 - [requestRender](#gear-requestrender)
+- [idle](#gear-idle)
+- [getDebugInputs](#gear-getdebuginputs)
 - [disableStdoutInterception](#gear-disablestdoutinterception)
 - [enableKittyKeyboard](#gear-enablekittykeyboard)
 - [disableKittyKeyboard](#gear-disablekittykeyboard)
@@ -4254,6 +4435,18 @@ box.backgroundColor = "red"
 renderer.requestRender()
 ```
 
+
+#### :gear: idle
+
+| Method | Type |
+| ---------- | ---------- |
+| `idle` | `() => Promise<void>` |
+
+#### :gear: getDebugInputs
+
+| Method | Type |
+| ---------- | ---------- |
+| `getDebugInputs` | `() => { timestamp: string; sequence: string; }[]` |
 
 #### :gear: disableStdoutInterception
 
@@ -4800,7 +4993,7 @@ scrollBox.scrollTo({ x: 100, y: 200 });
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `(key: string or KeyEvent) => boolean` |
+| `handleKeyPress` | `(key: KeyEvent) => boolean` |
 
 #### :gear: startAutoScroll
 
@@ -4954,7 +5147,7 @@ select.on(SelectRenderableEvents.ITEM_SELECTED, (index, option) => {
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `(key: string or KeyEvent) => boolean` |
+| `handleKeyPress` | `(key: KeyEvent) => boolean` |
 
 ## :factory: TabSelectRenderable
 
@@ -5053,7 +5246,7 @@ tabs.on(TabSelectRenderableEvents.ITEM_SELECTED, (index, option) => {
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `(key: string or KeyEvent) => boolean` |
+| `handleKeyPress` | `(key: KeyEvent) => boolean` |
 
 ## :factory: EditBufferRenderable
 
@@ -5087,7 +5280,6 @@ class MyEditor extends EditBufferRenderable {
 - [render](#gear-render)
 - [focus](#gear-focus)
 - [blur](#gear-blur)
-- [destroy](#gear-destroy)
 - [addHighlight](#gear-addhighlight)
 - [addHighlightByCharRange](#gear-addhighlightbycharrange)
 - [removeHighlightsByRef](#gear-removehighlightsbyref)
@@ -5095,6 +5287,7 @@ class MyEditor extends EditBufferRenderable {
 - [clearAllHighlights](#gear-clearallhighlights)
 - [getLineHighlights](#gear-getlinehighlights)
 - [setText](#gear-settext)
+- [replaceText](#gear-replacetext)
 - [clear](#gear-clear)
 - [deleteRange](#gear-deleterange)
 - [insertText](#gear-inserttext)
@@ -5149,12 +5342,6 @@ class MyEditor extends EditBufferRenderable {
 | ---------- | ---------- |
 | `blur` | `() => void` |
 
-#### :gear: destroy
-
-| Method | Type |
-| ---------- | ---------- |
-| `destroy` | `() => void` |
-
 #### :gear: addHighlight
 
 | Method | Type |
@@ -5193,17 +5380,28 @@ class MyEditor extends EditBufferRenderable {
 
 #### :gear: setText
 
-Sets the entire text content.
+Sets the entire text content and resets buffer state.
 
 | Method | Type |
 | ---------- | ---------- |
-| `setText` | `(text: string, opts?: { history?: boolean or undefined; } or undefined) => void` |
+| `setText` | `(text: string) => void` |
 
 Parameters:
 
 * `text`: - The new text content
-* `opts`: - Options controlling undo history
-* `opts.history`: - If true, adds to undo history; if false, replaces without history.
+
+
+#### :gear: replaceText
+
+Replaces text while preserving undo history.
+
+| Method | Type |
+| ---------- | ---------- |
+| `replaceText` | `(text: string) => void` |
+
+Parameters:
+
+* `text`: - The new text content
 
 
 #### :gear: clear
@@ -5354,6 +5552,8 @@ textarea.on("change", () => {
 - [gotoLine](#gear-gotoline)
 - [gotoLineHome](#gear-gotolinehome)
 - [gotoLineEnd](#gear-gotolineend)
+- [gotoVisualLineHome](#gear-gotovisuallinehome)
+- [gotoVisualLineEnd](#gear-gotovisuallineend)
 - [gotoBufferHome](#gear-gotobufferhome)
 - [gotoBufferEnd](#gear-gotobufferend)
 - [deleteToLineEnd](#gear-deletetolineend)
@@ -5378,7 +5578,7 @@ textarea.on("change", () => {
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `(key: string or KeyEvent) => boolean` |
+| `handleKeyPress` | `(key: KeyEvent) => boolean` |
 
 #### :gear: insertChar
 
@@ -5459,6 +5659,18 @@ Inserts text at the current cursor position.
 | Method | Type |
 | ---------- | ---------- |
 | `gotoLineEnd` | `(options?: { select?: boolean or undefined; } or undefined) => boolean` |
+
+#### :gear: gotoVisualLineHome
+
+| Method | Type |
+| ---------- | ---------- |
+| `gotoVisualLineHome` | `(options?: { select?: boolean or undefined; } or undefined) => boolean` |
+
+#### :gear: gotoVisualLineEnd
+
+| Method | Type |
+| ---------- | ---------- |
+| `gotoVisualLineEnd` | `(options?: { select?: boolean or undefined; } or undefined) => boolean` |
 
 #### :gear: gotoBufferHome
 
@@ -5771,14 +5983,14 @@ Flattened array of styled text chunks
 
 ### Properties
 
-- [__@BrandedTextNodeRenderable@1862](#gear-__@brandedtextnoderenderable@1862)
+- [__@BrandedTextNodeRenderable@1815](#gear-__@brandedtextnoderenderable@1815)
 - [parent](#gear-parent)
 
-#### :gear: __@BrandedTextNodeRenderable@1862
+#### :gear: __@BrandedTextNodeRenderable@1815
 
 | Property | Type |
 | ---------- | ---------- |
-| `__@BrandedTextNodeRenderable@1862` | `boolean` |
+| `__@BrandedTextNodeRenderable@1815` | `boolean` |
 
 #### :gear: parent
 
@@ -5930,14 +6142,14 @@ const textComponent = new TextRenderable(ctx, {
 
 ### Properties
 
-- [__@BrandedStyledText@1860](#gear-__@brandedstyledtext@1860)
+- [__@BrandedStyledText@1813](#gear-__@brandedstyledtext@1813)
 - [chunks](#gear-chunks)
 
-#### :gear: __@BrandedStyledText@1860
+#### :gear: __@BrandedStyledText@1813
 
 | Property | Type |
 | ---------- | ---------- |
-| `__@BrandedStyledText@1860` | `boolean` |
+| `__@BrandedStyledText@1813` | `boolean` |
 
 #### :gear: chunks
 
@@ -6236,6 +6448,10 @@ const overlay = OptimizedBuffer.create(40, 10, "unicode", {
 - [pushScissorRect](#gear-pushscissorrect)
 - [popScissorRect](#gear-popscissorrect)
 - [clearScissorRects](#gear-clearscissorrects)
+- [pushOpacity](#gear-pushopacity)
+- [popOpacity](#gear-popopacity)
+- [getCurrentOpacity](#gear-getcurrentopacity)
+- [clearOpacity](#gear-clearopacity)
 - [encodeUnicode](#gear-encodeunicode)
 - [freeUnicode](#gear-freeunicode)
 - [drawChar](#gear-drawchar)
@@ -6547,6 +6763,30 @@ Clears all scissor rectangles from the stack.
 | ---------- | ---------- |
 | `clearScissorRects` | `() => void` |
 
+#### :gear: pushOpacity
+
+| Method | Type |
+| ---------- | ---------- |
+| `pushOpacity` | `(opacity: number) => void` |
+
+#### :gear: popOpacity
+
+| Method | Type |
+| ---------- | ---------- |
+| `popOpacity` | `() => void` |
+
+#### :gear: getCurrentOpacity
+
+| Method | Type |
+| ---------- | ---------- |
+| `getCurrentOpacity` | `() => number` |
+
+#### :gear: clearOpacity
+
+| Method | Type |
+| ---------- | ---------- |
+| `clearOpacity` | `() => void` |
+
 #### :gear: encodeUnicode
 
 | Method | Type |
@@ -6797,7 +7037,7 @@ root.add(box)
 
 | Method | Type |
 | ---------- | ---------- |
-| `handleKeyPress` | `((key: string or KeyEvent) => boolean) or undefined` |
+| `handleKeyPress` | `((key: KeyEvent) => boolean) or undefined` |
 
 #### :gear: handlePaste
 
@@ -6833,7 +7073,7 @@ root.add(box)
 
 | Method | Type |
 | ---------- | ---------- |
-| `getLayoutNode` | `() => Node` |
+| `getLayoutNode` | `() => YogaNode` |
 
 #### :gear: updateFromLayout
 
@@ -8489,6 +8729,41 @@ Creates a THREE.Texture with a procedural noise pattern.
 | Method | Type |
 | ---------- | ---------- |
 | `isHighlighting` | `() => boolean` |
+
+## :factory: TestRecorder
+
+TestRecorder records frames from a TestRenderer by hooking into the render pipeline.
+It captures the character frame after each native render pass.
+
+### Methods
+
+- [rec](#gear-rec)
+- [stop](#gear-stop)
+- [clear](#gear-clear)
+
+#### :gear: rec
+
+Start recording frames. This hooks into the renderer's renderNative method.
+
+| Method | Type |
+| ---------- | ---------- |
+| `rec` | `() => void` |
+
+#### :gear: stop
+
+Stop recording frames and restore the original renderNative method.
+
+| Method | Type |
+| ---------- | ---------- |
+| `stop` | `() => void` |
+
+#### :gear: clear
+
+Clear all recorded frames.
+
+| Method | Type |
+| ---------- | ---------- |
+| `clear` | `() => void` |
 
 ## :nut_and_bolt: Enum
 

@@ -66,7 +66,7 @@ Whether to use an offscreen buffer for rendering (improves performance for compl
 
 #### Inherited from
 
-[`TextBufferOptions`](TextBufferOptions.md).[`buffered`](TextBufferOptions.md#buffered)
+[`TextareaOptions`](TextareaOptions.md).[`buffered`](TextareaOptions.md#buffered)
 
 ***
 
@@ -190,6 +190,18 @@ Align children along main axis: "flex-start", "center", "flex-end", "space-betwe
 
 ***
 
+### keyAliasMap?
+
+> `optional` **keyAliasMap**: `KeyAliasMap`
+
+***
+
+### keyBindings?
+
+> `optional` **keyBindings**: [`TabSelectKeyBinding`](../type-aliases/TabSelectKeyBinding.md)[]
+
+***
+
 ### left?
 
 > `optional` **left**: `number` \| `"auto"` \| `` `${number}%` ``
@@ -210,7 +222,7 @@ Whether to request continuous rendering (default: false)
 
 #### Inherited from
 
-[`TextBufferOptions`](TextBufferOptions.md).[`live`](TextBufferOptions.md#live)
+[`TextareaOptions`](TextareaOptions.md).[`live`](TextareaOptions.md#live)
 
 ***
 
@@ -652,6 +664,16 @@ Handler called when the renderable's size changes
 
 ***
 
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+[`TextareaOptions`](TextareaOptions.md).[`opacity`](TextareaOptions.md#opacity)
+
+***
+
 ### options?
 
 > `optional` **options**: [`TabSelectOption`](TabSelectOption.md)[]
@@ -900,7 +922,7 @@ Whether the renderable is visible (default: true)
 
 #### Inherited from
 
-[`TextBufferOptions`](TextBufferOptions.md).[`visible`](TextBufferOptions.md#visible)
+[`TextareaOptions`](TextareaOptions.md).[`visible`](TextareaOptions.md#visible)
 
 ***
 
@@ -932,4 +954,4 @@ Stacking order - higher values render on top (default: 0)
 
 #### Inherited from
 
-[`TextBufferOptions`](TextBufferOptions.md).[`zIndex`](TextBufferOptions.md#zindex)
+[`TextareaOptions`](TextareaOptions.md).[`zIndex`](TextareaOptions.md#zindex)

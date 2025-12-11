@@ -555,6 +555,44 @@ incremental editing, and grapheme-aware operations.
 
 ***
 
+### replaceText()
+
+> **replaceText**(`text`): `void`
+
+Replace text while preserving undo history (creates an undo point).
+Use this when you want the setText operation to be undoable.
+
+#### Parameters
+
+##### text
+
+`string`
+
+#### Returns
+
+`void`
+
+***
+
+### replaceTextOwned()
+
+> **replaceTextOwned**(`text`): `void`
+
+Replace text using owned memory while preserving undo history (creates an undo point).
+The native code takes ownership of the memory.
+
+#### Parameters
+
+##### text
+
+`string`
+
+#### Returns
+
+`void`
+
+***
+
 ### resetDefaults()
 
 > **resetDefaults**(): `void`
@@ -687,19 +725,16 @@ incremental editing, and grapheme-aware operations.
 
 ### setText()
 
-> **setText**(`text`, `opts?`): `void`
+> **setText**(`text`): `void`
+
+Set text and completely reset the buffer state (clears history, resets add_buffer).
+Use this for initial text setting or when you want a clean slate.
 
 #### Parameters
 
 ##### text
 
 `string`
-
-##### opts?
-
-###### history?
-
-`boolean`
 
 #### Returns
 
@@ -709,19 +744,16 @@ incremental editing, and grapheme-aware operations.
 
 ### setTextOwned()
 
-> **setTextOwned**(`text`, `opts?`): `void`
+> **setTextOwned**(`text`): `void`
+
+Set text using owned memory and completely reset the buffer state (clears history, resets add_buffer).
+The native code takes ownership of the memory.
 
 #### Parameters
 
 ##### text
 
 `string`
-
-##### opts?
-
-###### history?
-
-`boolean`
 
 #### Returns
 

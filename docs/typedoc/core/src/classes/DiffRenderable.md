@@ -2,52 +2,42 @@
 
 ***
 
-[opentui-dev](../../../README.md) / [core/src](../README.md) / TextBufferRenderable
+[opentui-dev](../../../README.md) / [core/src](../README.md) / DiffRenderable
 
-# Abstract Class: TextBufferRenderable
+# Class: DiffRenderable
 
-Abstract base class for renderables that display read-only text using a TextBuffer.
+A renderable that displays unified or split diff views with syntax highlighting.
 
 ## Remarks
 
-TextBufferRenderable provides high-performance text rendering with support for:
-- Text styling (colors, attributes like bold/italic/underline)
-- Text selection
-- Text wrapping (character, word, or none)
-- Custom tab indicators
-- Syntax highlighting through TextBuffer
-
-This is an abstract class that must be extended. Use [Text](../functions/Text.md) for simple text display
-or create custom text-based renderables by extending this class.
+DiffRenderable parses unified diff format and displays changes with:
+- Unified view: Single column showing all changes with +/- indicators
+- Split view: Side-by-side comparison of old and new content
+- Syntax highlighting via Tree-sitter
+- Customizable colors for added, removed, and context lines
+- Line numbers with appropriate styling
 
 ## Example
 
 ```typescript
-class MyTextDisplay extends TextBufferRenderable {
-  constructor(ctx: RenderContext) {
-    super(ctx, { fg: "white", bg: "black", wrapMode: "word" });
-  }
-}
+const diff = new DiffRenderable(ctx, {
+  diff: unifiedDiffString,
+  view: "split",
+  filetype: "typescript",
+  addedBg: "#22442244",
+  removedBg: "#44222244"
+});
 ```
 
 ## Extends
 
 - [`Renderable`](Renderable.md)
 
-## Extended by
-
-- [`CodeRenderable`](CodeRenderable.md)
-- [`TextRenderable`](TextRenderable.md)
-
-## Implements
-
-- [`LineInfoProvider`](../interfaces/LineInfoProvider.md)
-
 ## Constructors
 
 ### Constructor
 
-> **new TextBufferRenderable**(`ctx`, `options`): `TextBufferRenderable`
+> **new DiffRenderable**(`ctx`, `options`): `DiffRenderable`
 
 #### Parameters
 
@@ -57,11 +47,11 @@ class MyTextDisplay extends TextBufferRenderable {
 
 ##### options
 
-[`TextBufferOptions`](../interfaces/TextBufferOptions.md)
+[`DiffRenderableOptions`](../interfaces/DiffRenderableOptions.md)
 
 #### Returns
 
-`TextBufferRenderable`
+`DiffRenderable`
 
 #### Overrides
 
@@ -96,72 +86,6 @@ class MyTextDisplay extends TextBufferRenderable {
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`_ctx`](Renderable.md#_ctx)
-
-***
-
-### \_defaultAttributes
-
-> `protected` **\_defaultAttributes**: `number`
-
-Default text attributes bitfield.
-
-***
-
-### \_defaultBg
-
-> `protected` **\_defaultBg**: [`RGBA`](RGBA.md)
-
-Default background color.
-
-***
-
-### \_defaultFg
-
-> `protected` **\_defaultFg**: [`RGBA`](RGBA.md)
-
-Default foreground color for text.
-
-***
-
-### \_defaultOptions
-
-> `protected` **\_defaultOptions**: `object`
-
-#### attributes
-
-> **attributes**: `number` = `0`
-
-#### bg
-
-> **bg**: [`RGBA`](RGBA.md)
-
-#### fg
-
-> **fg**: [`RGBA`](RGBA.md)
-
-#### selectable
-
-> **selectable**: `true` = `true`
-
-#### selectionBg
-
-> **selectionBg**: `any` = `undefined`
-
-#### selectionFg
-
-> **selectionFg**: `any` = `undefined`
-
-#### tabIndicator
-
-> **tabIndicator**: `any` = `undefined`
-
-#### tabIndicatorColor
-
-> **tabIndicatorColor**: `any` = `undefined`
-
-#### wrapMode
-
-> **wrapMode**: `"none"` \| `"char"` \| `"word"`
 
 ***
 
@@ -285,50 +209,6 @@ Default foreground color for text.
 
 ***
 
-### \_scrollX
-
-> `protected` **\_scrollX**: `number` = `0`
-
-***
-
-### \_scrollY
-
-> `protected` **\_scrollY**: `number` = `0`
-
-***
-
-### \_selectionBg
-
-> `protected` **\_selectionBg**: [`RGBA`](RGBA.md)
-
-Background color for selected text, or undefined for default.
-
-***
-
-### \_selectionFg
-
-> `protected` **\_selectionFg**: [`RGBA`](RGBA.md)
-
-Foreground color for selected text, or undefined to inherit.
-
-***
-
-### \_tabIndicator?
-
-> `protected` `optional` **\_tabIndicator**: `string` \| `number`
-
-Custom tab indicator (character or width).
-
-***
-
-### \_tabIndicatorColor?
-
-> `protected` `optional` **\_tabIndicatorColor**: [`RGBA`](RGBA.md)
-
-Color for tab indicator.
-
-***
-
 ### \_translateX
 
 > `protected` **\_translateX**: `number` = `0`
@@ -376,14 +256,6 @@ Color for tab indicator.
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`_widthValue`](Renderable.md#_widthvalue)
-
-***
-
-### \_wrapMode
-
-> `protected` **\_wrapMode**: `"none"` \| `"char"` \| `"word"` = `"word"`
-
-Current text wrapping mode.
 
 ***
 
@@ -454,14 +326,6 @@ Current text wrapping mode.
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`keypressHandler`](Renderable.md#keypresshandler)
-
-***
-
-### lastLocalSelection
-
-> `protected` **lastLocalSelection**: [`LocalSelectionBounds`](../interfaces/LocalSelectionBounds.md) = `null`
-
-Cached local selection bounds from last selection change.
 
 ***
 
@@ -577,29 +441,11 @@ Cached local selection bounds from last selection change.
 
 ### selectable
 
-> **selectable**: `boolean` = `true`
+> **selectable**: `boolean` = `false`
 
-Whether this renderable can be selected.
-
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`selectable`](Renderable.md#selectable)
-
-***
-
-### textBuffer
-
-> `protected` **textBuffer**: [`TextBuffer`](TextBuffer.md)
-
-The underlying text storage and styling system.
-
-***
-
-### textBufferView
-
-> `protected` **textBufferView**: [`TextBufferView`](TextBufferView.md)
-
-View layer that handles layout, wrapping, and viewport management.
 
 ***
 
@@ -622,6 +468,110 @@ View layer that handles layout, wrapping, and viewport management.
 [`Renderable`](Renderable.md).[`renderablesByNumber`](Renderable.md#renderablesbynumber)
 
 ## Accessors
+
+### addedBg
+
+#### Get Signature
+
+> **get** **addedBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **addedBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### addedContentBg
+
+#### Get Signature
+
+> **get** **addedContentBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **addedContentBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### addedLineNumberBg
+
+#### Get Signature
+
+> **get** **addedLineNumberBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **addedLineNumberBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### addedSignColor
+
+#### Get Signature
+
+> **get** **addedSignColor**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **addedSignColor**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
 
 ### alignItems
 
@@ -667,58 +617,6 @@ View layer that handles layout, wrapping, and viewport management.
 
 ***
 
-### attributes
-
-#### Get Signature
-
-> **get** **attributes**(): `number`
-
-##### Returns
-
-`number`
-
-#### Set Signature
-
-> **set** **attributes**(`value`): `void`
-
-##### Parameters
-
-###### value
-
-`number`
-
-##### Returns
-
-`void`
-
-***
-
-### bg
-
-#### Get Signature
-
-> **get** **bg**(): [`RGBA`](RGBA.md)
-
-##### Returns
-
-[`RGBA`](RGBA.md)
-
-#### Set Signature
-
-> **set** **bg**(`value`): `void`
-
-##### Parameters
-
-###### value
-
-`string` | [`RGBA`](RGBA.md)
-
-##### Returns
-
-`void`
-
-***
-
 ### bottom
 
 #### Get Signature
@@ -749,6 +647,84 @@ View layer that handles layout, wrapping, and viewport management.
 
 ***
 
+### conceal
+
+#### Get Signature
+
+> **get** **conceal**(): `boolean`
+
+##### Returns
+
+`boolean`
+
+#### Set Signature
+
+> **set** **conceal**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`boolean`
+
+##### Returns
+
+`void`
+
+***
+
+### contextBg
+
+#### Get Signature
+
+> **get** **contextBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **contextBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### contextContentBg
+
+#### Get Signature
+
+> **get** **contextContentBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **contextContentBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
 ### ctx
 
 #### Get Signature
@@ -765,13 +741,37 @@ View layer that handles layout, wrapping, and viewport management.
 
 ***
 
+### diff
+
+#### Get Signature
+
+> **get** **diff**(): `string`
+
+##### Returns
+
+`string`
+
+#### Set Signature
+
+> **set** **diff**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string`
+
+##### Returns
+
+`void`
+
+***
+
 ### fg
 
 #### Get Signature
 
 > **get** **fg**(): [`RGBA`](RGBA.md)
-
-Default foreground (text) color.
 
 ##### Returns
 
@@ -786,6 +786,32 @@ Default foreground (text) color.
 ###### value
 
 `string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### filetype
+
+#### Get Signature
+
+> **get** **filetype**(): `string`
+
+##### Returns
+
+`string`
+
+#### Set Signature
+
+> **set** **filetype**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string`
 
 ##### Returns
 
@@ -1079,47 +1105,55 @@ Default foreground (text) color.
 
 ***
 
-### lineCount
+### lineNumberBg
 
 #### Get Signature
 
-> **get** **lineCount**(): `number`
-
-Total number of logical lines in the buffer.
-
-##### Remarks
-
-This is the count of newline-delimited lines, not visual lines after wrapping.
+> **get** **lineNumberBg**(): [`RGBA`](RGBA.md)
 
 ##### Returns
 
-`number`
+[`RGBA`](RGBA.md)
 
-#### Implementation of
+#### Set Signature
 
-[`LineInfoProvider`](../interfaces/LineInfoProvider.md).[`lineCount`](../interfaces/LineInfoProvider.md#linecount)
+> **set** **lineNumberBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
 
 ***
 
-### lineInfo
+### lineNumberFg
 
 #### Get Signature
 
-> **get** **lineInfo**(): [`LineInfo`](../interfaces/LineInfo.md)
-
-Line layout information for this text buffer.
-
-##### Remarks
-
-Provides data about line starts, widths, and wrapping used by components like [LineNumberRenderable](LineNumberRenderable.md).
+> **get** **lineNumberFg**(): [`RGBA`](RGBA.md)
 
 ##### Returns
 
-[`LineInfo`](../interfaces/LineInfo.md)
+[`RGBA`](RGBA.md)
 
-#### Implementation of
+#### Set Signature
 
-[`LineInfoProvider`](../interfaces/LineInfoProvider.md).[`lineInfo`](../interfaces/LineInfoProvider.md#lineinfo)
+> **set** **lineNumberFg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
 
 ***
 
@@ -1298,30 +1332,6 @@ Provides data about line starts, widths, and wrapping used by components like [L
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`maxHeight`](Renderable.md#maxheight)
-
-***
-
-### maxScrollX
-
-#### Get Signature
-
-> **get** **maxScrollX**(): `number`
-
-##### Returns
-
-`number`
-
-***
-
-### maxScrollY
-
-#### Get Signature
-
-> **get** **maxScrollY**(): `number`
-
-##### Returns
-
-`number`
 
 ***
 
@@ -1895,20 +1905,6 @@ Provides data about line starts, widths, and wrapping used by components like [L
 
 ***
 
-### plainText
-
-#### Get Signature
-
-> **get** **plainText**(): `string`
-
-The complete text content as a plain string without styling.
-
-##### Returns
-
-`string`
-
-***
-
 ### position
 
 #### Set Signature
@@ -1943,7 +1939,111 @@ The complete text content as a plain string without styling.
 
 #### Inherited from
 
-[`TextareaRenderable`](TextareaRenderable.md).[`primaryAxis`](TextareaRenderable.md#primaryaxis)
+[`Renderable`](Renderable.md).[`primaryAxis`](Renderable.md#primaryaxis)
+
+***
+
+### removedBg
+
+#### Get Signature
+
+> **get** **removedBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **removedBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### removedContentBg
+
+#### Get Signature
+
+> **get** **removedContentBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **removedContentBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### removedLineNumberBg
+
+#### Get Signature
+
+> **get** **removedLineNumberBg**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **removedLineNumberBg**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
+
+***
+
+### removedSignColor
+
+#### Get Signature
+
+> **get** **removedSignColor**(): [`RGBA`](RGBA.md)
+
+##### Returns
+
+[`RGBA`](RGBA.md)
+
+#### Set Signature
+
+> **set** **removedSignColor**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`string` | [`RGBA`](RGBA.md)
+
+##### Returns
+
+`void`
 
 ***
 
@@ -1974,92 +2074,6 @@ The complete text content as a plain string without styling.
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`right`](Renderable.md#right)
-
-***
-
-### scrollHeight
-
-#### Get Signature
-
-> **get** **scrollHeight**(): `number`
-
-##### Returns
-
-`number`
-
-***
-
-### scrollWidth
-
-#### Get Signature
-
-> **get** **scrollWidth**(): `number`
-
-##### Returns
-
-`number`
-
-***
-
-### scrollX
-
-#### Get Signature
-
-> **get** **scrollX**(): `number`
-
-##### Returns
-
-`number`
-
-#### Set Signature
-
-> **set** **scrollX**(`value`): `void`
-
-##### Parameters
-
-###### value
-
-`number`
-
-##### Returns
-
-`void`
-
-***
-
-### scrollY
-
-#### Get Signature
-
-> **get** **scrollY**(): `number`
-
-Current vertical scroll offset.
-
-##### Remarks
-
-Controls which line is at the top of the visible viewport.
-
-##### Returns
-
-`number`
-
-#### Set Signature
-
-> **set** **scrollY**(`value`): `void`
-
-##### Parameters
-
-###### value
-
-`number`
-
-##### Returns
-
-`void`
-
-#### Implementation of
-
-[`LineInfoProvider`](../interfaces/LineInfoProvider.md).[`scrollY`](../interfaces/LineInfoProvider.md#scrolly)
 
 ***
 
@@ -2115,25 +2129,25 @@ Controls which line is at the top of the visible viewport.
 
 ***
 
-### tabIndicator
+### showLineNumbers
 
 #### Get Signature
 
-> **get** **tabIndicator**(): `string` \| `number`
+> **get** **showLineNumbers**(): `boolean`
 
 ##### Returns
 
-`string` \| `number`
+`boolean`
 
 #### Set Signature
 
-> **set** **tabIndicator**(`value`): `void`
+> **set** **showLineNumbers**(`value`): `void`
 
 ##### Parameters
 
 ###### value
 
-`string` | `number`
+`boolean`
 
 ##### Returns
 
@@ -2141,43 +2155,29 @@ Controls which line is at the top of the visible viewport.
 
 ***
 
-### tabIndicatorColor
+### syntaxStyle
 
 #### Get Signature
 
-> **get** **tabIndicatorColor**(): [`RGBA`](RGBA.md)
+> **get** **syntaxStyle**(): [`SyntaxStyle`](SyntaxStyle.md)
 
 ##### Returns
 
-[`RGBA`](RGBA.md)
+[`SyntaxStyle`](SyntaxStyle.md)
 
 #### Set Signature
 
-> **set** **tabIndicatorColor**(`value`): `void`
+> **set** **syntaxStyle**(`value`): `void`
 
 ##### Parameters
 
 ###### value
 
-`string` | [`RGBA`](RGBA.md)
+[`SyntaxStyle`](SyntaxStyle.md)
 
 ##### Returns
 
 `void`
-
-***
-
-### textLength
-
-#### Get Signature
-
-> **get** **textLength**(): `number`
-
-Total character length of the text buffer.
-
-##### Returns
-
-`number`
 
 ***
 
@@ -2271,25 +2271,29 @@ Total character length of the text buffer.
 
 ***
 
-### virtualLineCount
+### view
 
 #### Get Signature
 
-> **get** **virtualLineCount**(): `number`
-
-Total number of virtual (visual) lines after wrapping.
-
-##### Remarks
-
-This accounts for line wrapping and may be greater than [lineCount](#linecount).
+> **get** **view**(): `"unified"` \| `"split"`
 
 ##### Returns
 
-`number`
+`"unified"` \| `"split"`
 
-#### Implementation of
+#### Set Signature
 
-[`LineInfoProvider`](../interfaces/LineInfoProvider.md).[`virtualLineCount`](../interfaces/LineInfoProvider.md#virtuallinecount)
+> **set** **view**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`"unified"` | `"split"`
+
+##### Returns
+
+`void`
 
 ***
 
@@ -2543,7 +2547,7 @@ This accounts for line wrapping and may be greater than [lineCount](#linecount).
 
 `void`
 
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`destroy`](Renderable.md#destroy)
 
@@ -2557,7 +2561,7 @@ This accounts for line wrapping and may be greater than [lineCount](#linecount).
 
 `void`
 
-#### Inherited from
+#### Overrides
 
 [`Renderable`](Renderable.md).[`destroyRecursively`](Renderable.md#destroyrecursively)
 
@@ -2721,39 +2725,13 @@ This accounts for line wrapping and may be greater than [lineCount](#linecount).
 
 > **getSelectedText**(): `string`
 
-Gets the currently selected text as a plain string.
-
 #### Returns
 
 `string`
 
-The selected text, or empty string if no selection
-
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`getSelectedText`](Renderable.md#getselectedtext)
-
-***
-
-### getSelection()
-
-> **getSelection**(): `object`
-
-Gets the current selection range as character offsets.
-
-#### Returns
-
-`object`
-
-Object with `start` and `end` offsets, or null if no selection
-
-##### end
-
-> **end**: `number`
-
-##### start
-
-> **start**: `number`
 
 ***
 
@@ -2821,35 +2799,15 @@ Object with `start` and `end` offsets, or null if no selection
 
 ***
 
-### handleScroll()
-
-> `protected` **handleScroll**(`event`): `void`
-
-#### Parameters
-
-##### event
-
-`any`
-
-#### Returns
-
-`void`
-
-***
-
 ### hasSelection()
 
 > **hasSelection**(): `boolean`
-
-Checks if any text is currently selected.
 
 #### Returns
 
 `boolean`
 
-`true` if there is an active selection
-
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`hasSelection`](Renderable.md#hasselection)
 
@@ -2907,54 +2865,6 @@ Checks if any text is currently selected.
 
 ***
 
-### onAttributesChanged()
-
-> `protected` **onAttributesChanged**(`newAttributes`): `void`
-
-#### Parameters
-
-##### newAttributes
-
-`number`
-
-#### Returns
-
-`void`
-
-***
-
-### onBgChanged()
-
-> `protected` **onBgChanged**(`newColor`): `void`
-
-#### Parameters
-
-##### newColor
-
-[`RGBA`](RGBA.md)
-
-#### Returns
-
-`void`
-
-***
-
-### onFgChanged()
-
-> `protected` **onFgChanged**(`newColor`): `void`
-
-#### Parameters
-
-##### newColor
-
-[`RGBA`](RGBA.md)
-
-#### Returns
-
-`void`
-
-***
-
 ### onLayoutResize()
 
 > `protected` **onLayoutResize**(`width`, `height`): `void`
@@ -2987,13 +2897,13 @@ Checks if any text is currently selected.
 
 ##### event
 
-`any`
+[`MouseEvent`](MouseEvent.md)
 
 #### Returns
 
 `void`
 
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`onMouseEvent`](Renderable.md#onmouseevent)
 
@@ -3045,25 +2955,17 @@ If you need to request a render during a render pass, use process.nextTick.
 
 > **onSelectionChanged**(`selection`): `boolean`
 
-**`Internal`**
-
-Handles selection changes from the global selection system.
-
 #### Parameters
 
 ##### selection
 
 [`Selection`](Selection.md)
 
-The new global selection state, or null to clear
-
 #### Returns
 
 `boolean`
 
-`true` if this renderable has an active selection after the change
-
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`onSelectionChanged`](Renderable.md#onselectionchanged)
 
@@ -3129,16 +3031,6 @@ The new global selection state, or null to clear
 
 ***
 
-### refreshLocalSelection()
-
-> `protected` **refreshLocalSelection**(): `boolean`
-
-#### Returns
-
-`boolean`
-
-***
-
 ### remove()
 
 > **remove**(`id`): `void`
@@ -3177,7 +3069,7 @@ The new global selection state, or null to clear
 
 `void`
 
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`render`](Renderable.md#render)
 
@@ -3185,7 +3077,7 @@ The new global selection state, or null to clear
 
 ### renderSelf()
 
-> `protected` **renderSelf**(`buffer`): `void`
+> `protected` **renderSelf**(`buffer`, `deltaTime`): `void`
 
 #### Parameters
 
@@ -3193,11 +3085,15 @@ The new global selection state, or null to clear
 
 [`OptimizedBuffer`](OptimizedBuffer.md)
 
+##### deltaTime
+
+`number`
+
 #### Returns
 
 `void`
 
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`renderSelf`](Renderable.md#renderself)
 
@@ -3241,31 +3137,21 @@ The new global selection state, or null to clear
 
 > **shouldStartSelection**(`x`, `y`): `boolean`
 
-**`Internal`**
-
-Determines if a selection gesture should start at the given coordinates.
-
 #### Parameters
 
 ##### x
 
 `number`
 
-Global X coordinate
-
 ##### y
 
 `number`
-
-Global Y coordinate
 
 #### Returns
 
 `boolean`
 
-`true` if the coordinates are within this renderable's bounds and it's selectable
-
-#### Overrides
+#### Inherited from
 
 [`Renderable`](Renderable.md).[`shouldStartSelection`](Renderable.md#shouldstartselection)
 
@@ -3306,23 +3192,3 @@ Global Y coordinate
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`updateLayout`](Renderable.md#updatelayout)
-
-***
-
-### updateTextInfo()
-
-> `protected` **updateTextInfo**(): `void`
-
-#### Returns
-
-`void`
-
-***
-
-### updateViewportOffset()
-
-> `protected` **updateViewportOffset**(): `void`
-
-#### Returns
-
-`void`

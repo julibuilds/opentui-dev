@@ -267,6 +267,16 @@ scrollBox.scrollBy(10); // Scroll down by 10 pixels
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+[`BoxRenderable`](BoxRenderable.md).[`_isDestroyed`](BoxRenderable.md#_isdestroyed)
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -274,6 +284,16 @@ scrollBox.scrollBy(10); // Scroll down by 10 pixels
 #### Inherited from
 
 [`BoxRenderable`](BoxRenderable.md).[`_liveCount`](BoxRenderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`BoxRenderable`](BoxRenderable.md).[`_opacity`](BoxRenderable.md#_opacity)
 
 ***
 
@@ -629,7 +649,7 @@ The wrapper element that contains the viewport and horizontal scrollbar
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1867,6 +1887,36 @@ The wrapper element that contains the viewport and horizontal scrollbar
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`BoxRenderable`](BoxRenderable.md).[`opacity`](BoxRenderable.md#opacity)
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2876,11 +2926,11 @@ Determines which edge to stick to when [stickyScroll](#stickyscroll) is enabled.
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -2984,7 +3034,7 @@ Determines which edge to stick to when [stickyScroll](#stickyscroll) is enabled.
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 

@@ -6,7 +6,7 @@
 
 # Function: createTerminalPalette()
 
-> **createTerminalPalette**(`stdin`, `stdout`, `writeFn?`): [`TerminalPaletteDetector`](../interfaces/TerminalPaletteDetector.md)
+> **createTerminalPalette**(`stdin`, `stdout`, `writeFn?`, `isLegacyTmux?`): [`TerminalPaletteDetector`](../interfaces/TerminalPaletteDetector.md)
 
 ## Parameters
 
@@ -21,6 +21,10 @@
 ### writeFn?
 
 [`WriteFunction`](../type-aliases/WriteFunction.md)
+
+### isLegacyTmux?
+
+`boolean`
 
 ## Returns
 

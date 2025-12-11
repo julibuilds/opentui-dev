@@ -158,6 +158,16 @@ const slider = new SliderRenderable(ctx, {
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_isDestroyed`](Renderable.md#_isdestroyed)
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -165,6 +175,16 @@ const slider = new SliderRenderable(ctx, {
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`_liveCount`](Renderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_opacity`](Renderable.md#_opacity)
 
 ***
 
@@ -446,7 +466,7 @@ const slider = new SliderRenderable(ctx, {
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1522,6 +1542,36 @@ const slider = new SliderRenderable(ctx, {
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`opacity`](Renderable.md#opacity)
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2208,11 +2258,11 @@ const slider = new SliderRenderable(ctx, {
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -2316,7 +2366,7 @@ const slider = new SliderRenderable(ctx, {
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 

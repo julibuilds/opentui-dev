@@ -174,6 +174,12 @@ Height in cells, "auto", or percentage (e.g., "50%")
 
 ***
 
+### hideLineNumbers?
+
+> `optional` **hideLineNumbers**: `Set`\<`number`\>
+
+***
+
 ### id?
 
 > `optional` **id**: `string`
@@ -212,9 +218,21 @@ Position from left edge (requires position: "absolute")
 
 ### lineColors?
 
-> `optional` **lineColors**: `Map`\<`number`, `string` \| [`RGBA`](../classes/RGBA.md)\>
+> `optional` **lineColors**: `Map`\<`number`, `string` \| [`RGBA`](../classes/RGBA.md) \| [`LineColorConfig`](LineColorConfig.md)\>
 
 Map of line numbers to custom background colors for highlighting specific lines.
+
+***
+
+### lineNumberOffset?
+
+> `optional` **lineNumberOffset**: `number`
+
+***
+
+### lineNumbers?
+
+> `optional` **lineNumbers**: `Map`\<`number`, `number`\>
 
 ***
 
@@ -682,6 +700,16 @@ Handler called when the renderable's size changes
 
 ***
 
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+[`RenderableOptions`](RenderableOptions.md).[`opacity`](RenderableOptions.md#opacity)
+
+***
+
 ### overflow?
 
 > `optional` **overflow**: [`OverflowString`](../type-aliases/OverflowString.md)
@@ -841,6 +869,12 @@ Position from right edge (requires position: "absolute")
 #### Inherited from
 
 [`LayoutOptions`](LayoutOptions.md).[`right`](LayoutOptions.md#right)
+
+***
+
+### showLineNumbers?
+
+> `optional` **showLineNumbers**: `boolean`
 
 ***
 

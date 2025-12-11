@@ -210,6 +210,18 @@ Align children along main axis: "flex-start", "center", "flex-end", "space-betwe
 
 ***
 
+### keyAliasMap?
+
+> `optional` **keyAliasMap**: `KeyAliasMap`
+
+***
+
+### keyBindings?
+
+> `optional` **keyBindings**: [`InputKeyBinding`](../type-aliases/InputKeyBinding.md)[]
+
+***
+
 ### left?
 
 > `optional` **left**: `number` \| `"auto"` \| `` `${number}%` ``
@@ -677,6 +689,16 @@ Handler called when the renderable's size changes
 #### Inherited from
 
 [`RenderableOptions`](RenderableOptions.md).[`onSizeChange`](RenderableOptions.md#onsizechange)
+
+***
+
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+[`RenderableOptions`](RenderableOptions.md).[`opacity`](RenderableOptions.md#opacity)
 
 ***
 

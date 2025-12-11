@@ -42,6 +42,7 @@ const chart = new CustomRenderable(ctx, {
 
 - [`BoxOptions`](BoxOptions.md)
 - [`VRenderableOptions`](VRenderableOptions.md)
+- [`DiffRenderableOptions`](DiffRenderableOptions.md)
 - [`FrameBufferOptions`](FrameBufferOptions.md)
 - [`InputRenderableOptions`](InputRenderableOptions.md)
 - [`LineNumberOptions`](LineNumberOptions.md)
@@ -612,6 +613,12 @@ Handler called when the renderable's size changes
 #### Returns
 
 `void`
+
+***
+
+### opacity?
+
+> `optional` **opacity**: `number`
 
 ***
 

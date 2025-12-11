@@ -278,6 +278,16 @@ Whether this renderable can receive keyboard focus.
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+`EditBufferRenderable._isDestroyed`
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -285,6 +295,16 @@ Whether this renderable can receive keyboard focus.
 #### Inherited from
 
 `EditBufferRenderable._liveCount`
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+`EditBufferRenderable._opacity`
 
 ***
 
@@ -680,7 +700,7 @@ Whether text can be selected.
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1257,6 +1277,24 @@ Whether text can be selected.
 #### Inherited from
 
 `EditBufferRenderable.justifyContent`
+
+***
+
+### keyAliasMap
+
+#### Set Signature
+
+> **set** **keyAliasMap**(`aliases`): `void`
+
+##### Parameters
+
+###### aliases
+
+`KeyAliasMap`
+
+##### Returns
+
+`void`
 
 ***
 
@@ -2050,6 +2088,36 @@ Whether text can be selected.
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+`EditBufferRenderable.opacity`
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2613,6 +2681,22 @@ Whether text can be selected.
 #### Inherited from
 
 `EditBufferRenderable.translateY`
+
+***
+
+### virtualLineCount
+
+#### Get Signature
+
+> **get** **virtualLineCount**(): `number`
+
+##### Returns
+
+`number`
+
+#### Inherited from
+
+`EditBufferRenderable.virtualLineCount`
 
 ***
 
@@ -3204,11 +3288,11 @@ Ending column (0-based)
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -3486,6 +3570,42 @@ The substring
 
 ***
 
+### gotoVisualLineEnd()
+
+> **gotoVisualLineEnd**(`options?`): `boolean`
+
+#### Parameters
+
+##### options?
+
+###### select?
+
+`boolean`
+
+#### Returns
+
+`boolean`
+
+***
+
+### gotoVisualLineHome()
+
+> **gotoVisualLineHome**(`options?`): `boolean`
+
+#### Parameters
+
+##### options?
+
+###### select?
+
+`boolean`
+
+#### Returns
+
+`boolean`
+
+***
+
 ### handleFrameBufferResize()
 
 > `protected` **handleFrameBufferResize**(`width`, `height`): `void`
@@ -3518,7 +3638,7 @@ The substring
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 
@@ -4068,6 +4188,36 @@ If you need to request a render during a render pass, use process.nextTick.
 
 ***
 
+### replaceText()
+
+> **replaceText**(`text`): `void`
+
+Replaces text while preserving undo history.
+
+#### Parameters
+
+##### text
+
+`string`
+
+The new text content
+
+#### Returns
+
+`void`
+
+#### Remarks
+
+This method creates an undo point, allowing the operation to be undone.
+Use this when you want the text replacement to be undoable.
+For a complete reset without history, use [setText](#settext) instead.
+
+#### Inherited from
+
+`EditBufferRenderable.replaceText`
+
+***
+
 ### requestRender()
 
 > **requestRender**(): `void`
@@ -4104,9 +4254,9 @@ If you need to request a render during a render pass, use process.nextTick.
 
 ### setText()
 
-> **setText**(`text`, `opts?`): `void`
+> **setText**(`text`): `void`
 
-Sets the entire text content.
+Sets the entire text content and resets buffer state.
 
 #### Parameters
 
@@ -4116,25 +4266,15 @@ Sets the entire text content.
 
 The new text content
 
-##### opts?
-
-Options controlling undo history
-
-###### history?
-
-`boolean`
-
-If true, adds to undo history; if false, replaces without history.
-
 #### Returns
 
 `void`
 
-#### Default Value
+#### Remarks
 
-```ts
-true
-```
+This method clears the undo history and resets the add_buffer.
+Use this for initial text setting or when you want a clean slate.
+For undoable text replacement, use [replaceText](#replacetext) instead.
 
 #### Inherited from
 

@@ -682,6 +682,16 @@ Handler called when the renderable's size changes
 
 ***
 
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+[`RenderableOptions`](RenderableOptions.md).[`opacity`](RenderableOptions.md#opacity)
+
+***
+
 ### orientation
 
 > **orientation**: `"vertical"` \| `"horizontal"`

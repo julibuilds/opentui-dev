@@ -222,6 +222,26 @@
 
 ***
 
+### getVisualEOL()
+
+> **getVisualEOL**(): [`VisualCursor`](../interfaces/VisualCursor.md)
+
+#### Returns
+
+[`VisualCursor`](../interfaces/VisualCursor.md)
+
+***
+
+### getVisualSOL()
+
+> **getVisualSOL**(): [`VisualCursor`](../interfaces/VisualCursor.md)
+
+#### Returns
+
+[`VisualCursor`](../interfaces/VisualCursor.md)
+
+***
+
 ### hasSelection()
 
 > **hasSelection**(): `boolean`

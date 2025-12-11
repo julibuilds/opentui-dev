@@ -14,7 +14,7 @@
 
 ### Constructor
 
-> **new TerminalPalette**(`stdin`, `stdout`, `writeFn?`): `TerminalPalette`
+> **new TerminalPalette**(`stdin`, `stdout`, `writeFn?`, `isLegacyTmux?`): `TerminalPalette`
 
 #### Parameters
 
@@ -29,6 +29,10 @@
 ##### writeFn?
 
 [`WriteFunction`](../type-aliases/WriteFunction.md)
+
+##### isLegacyTmux?
+
+`boolean`
 
 #### Returns
 

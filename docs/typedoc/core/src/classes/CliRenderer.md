@@ -745,7 +745,7 @@ Removes all registered frame callbacks.
 
 ##### flags
 
-`number` = `0b00001`
+`number` = `0b00011`
 
 #### Returns
 
@@ -770,6 +770,16 @@ Removes all registered frame callbacks.
 #### Implementation of
 
 [`RenderContext`](../interfaces/RenderContext.md).[`focusRenderable`](../interfaces/RenderContext.md#focusrenderable)
+
+***
+
+### getDebugInputs()
+
+> **getDebugInputs**(): `object`[]
+
+#### Returns
+
+`object`[]
 
 ***
 
@@ -866,6 +876,16 @@ Error if renderer is suspended
 ##### minFrameTime
 
 > **minFrameTime**: `number`
+
+***
+
+### idle()
+
+> **idle**(): `Promise`\<`void`\>
+
+#### Returns
+
+`Promise`\<`void`\>
 
 ***
 

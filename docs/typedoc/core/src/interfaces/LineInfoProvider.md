@@ -41,3 +41,15 @@
 ##### Returns
 
 `number`
+
+***
+
+### virtualLineCount
+
+#### Get Signature
+
+> **get** **virtualLineCount**(): `number`
+
+##### Returns
+
+`number`

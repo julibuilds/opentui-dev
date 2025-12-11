@@ -744,6 +744,16 @@ Handler called when the renderable's size changes
 
 ***
 
+### opacity?
+
+> `optional` **opacity**: `number`
+
+#### Inherited from
+
+[`BoxOptions`](BoxOptions.md).[`opacity`](BoxOptions.md#opacity)
+
+***
+
 ### overflow?
 
 > `optional` **overflow**: [`OverflowString`](../type-aliases/OverflowString.md)

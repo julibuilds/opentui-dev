@@ -88,19 +88,19 @@ console.log(Object.keys(catalogue)) // ['box', 'text', 'input', ...]
 
 | Function | Type |
 | ---------- | ---------- |
-| `setInitialProperties` | `(instance: BaseRenderable, type: "span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select", props: Props) => void` |
+| `setInitialProperties` | `(instance: BaseRenderable, type: "span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "diff" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select" or "line-number", props: Props) => void` |
 
 ### :gear: updateProperties
 
 | Function | Type |
 | ---------- | ---------- |
-| `updateProperties` | `(instance: BaseRenderable, type: "span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select", oldProps: Props, newProps: Props) => void` |
+| `updateProperties` | `(instance: BaseRenderable, type: "span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "diff" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select" or "line-number", oldProps: Props, newProps: Props) => void` |
 
 ### :gear: getNextId
 
 | Function | Type |
 | ---------- | ---------- |
-| `getNextId` | `(type: "span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select") => string` |
+| `getNextId` | `(type: "span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "diff" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select" or "line-number") => string` |
 
 ### :gear: _render
 
@@ -212,30 +212,42 @@ or memoized child components.
 
 Hook for handling keyboard input events in the terminal.
 
-Registers a handler for keypress events that is automatically cleaned up when the component unmounts.
-The handler receives a KeyEvent object containing information about the pressed key.
-
 | Function | Type |
 | ---------- | ---------- |
-| `useKeyboard` | `(handler: (key: KeyEvent) => void) => void` |
+| `useKeyboard` | `(handler: (key: KeyEvent) => void, options?: UseKeyboardOptions) => void` |
 
 Parameters:
 
 * `handler`: - Callback function invoked on each keypress event
+* `options`: - Configuration options for keyboard handling
 
 
 Examples:
 
 ```tsx
+// Basic press handling (includes repeats)
 function MyComponent() {
   useKeyboard((key) => {
     if (key.key === 'q') {
       process.exit(0)
     }
-    console.log('Key pressed:', key.key)
+    console.log('Key pressed:', key.key, key.repeated ? "(repeat)" : "")
   })
 
   return <text>Press any key...</text>
+}
+
+// With release events
+function KeyTracker() {
+  const [keys, setKeys] = useState(new Set<string>())
+
+  useKeyboard((e) => {
+    if (e.eventType === "release") keys.delete(e.name)
+    else keys.add(e.name)
+    setKeys(new Set(keys))
+  }, { release: true })
+
+  return <text>Active keys: {[...keys].join(', ')}</text>
 }
 ```
 
@@ -395,7 +407,7 @@ Array of supported text node element types.
 
 | Constant | Type |
 | ---------- | ---------- |
-| `baseComponents` | `{ box: typeof BoxRenderable; text: typeof TextRenderable; code: typeof CodeRenderable; input: typeof InputRenderable; select: typeof SelectRenderable; ... 10 more ...; u: typeof UnderlineSpanRenderable; }` |
+| `baseComponents` | `{ box: typeof BoxRenderable; text: typeof TextRenderable; code: typeof CodeRenderable; diff: typeof DiffRenderable; input: typeof InputRenderable; ... 12 more ...; u: typeof UnderlineSpanRenderable; }` |
 
 ### :gear: componentCatalogue
 
@@ -407,7 +419,7 @@ Array of supported text node element types.
 
 | Constant | Type |
 | ---------- | ---------- |
-| `hostConfig` | `HostConfig<"span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select", Props, RootRenderable, ... 10 more ..., unknown>` |
+| `hostConfig` | `HostConfig<"span" or "b" or "strong" or "i" or "em" or "u" or "br" or "box" or "text" or "code" or "diff" or "input" or "select" or "textarea" or "scrollbox" or "ascii-font" or "tab-select" or "line-number", ... 12 more ..., unknown>` |
 
 ### :gear: reconciler
 

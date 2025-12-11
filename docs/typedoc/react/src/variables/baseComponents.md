@@ -30,6 +30,10 @@
 
 > **code**: *typeof* [`CodeRenderable`](../../../core/src/classes/CodeRenderable.md) = `CodeRenderable`
 
+### diff
+
+> **diff**: *typeof* [`DiffRenderable`](../../../core/src/classes/DiffRenderable.md) = `DiffRenderable`
+
 ### em
 
 > **em**: *typeof* `ItalicSpanRenderable` = `ItalicSpanRenderable`
@@ -41,6 +45,10 @@
 ### input
 
 > **input**: *typeof* [`InputRenderable`](../../../core/src/classes/InputRenderable.md) = `InputRenderable`
+
+### line-number
+
+> **line-number**: *typeof* [`LineNumberRenderable`](../../../core/src/classes/LineNumberRenderable.md) = `LineNumberRenderable`
 
 ### scrollbox
 

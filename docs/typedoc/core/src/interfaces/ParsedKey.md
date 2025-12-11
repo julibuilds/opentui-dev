@@ -80,6 +80,12 @@
 
 ***
 
+### repeated?
+
+> `optional` **repeated**: `boolean`
+
+***
+
 ### sequence
 
 > **sequence**: `string`

@@ -261,15 +261,13 @@ Default foreground color for text.
 
 ***
 
-### \_lineInfo
+### \_isDestroyed
 
-> `protected` **\_lineInfo**: [`LineInfo`](../interfaces/LineInfo.md)
-
-Cached line layout information.
+> `protected` **\_isDestroyed**: `boolean` = `false`
 
 #### Inherited from
 
-[`TextBufferRenderable`](TextBufferRenderable.md).[`_lineInfo`](TextBufferRenderable.md#_lineinfo)
+[`TextBufferRenderable`](TextBufferRenderable.md).[`_isDestroyed`](TextBufferRenderable.md#_isdestroyed)
 
 ***
 
@@ -280,6 +278,16 @@ Cached line layout information.
 #### Inherited from
 
 [`TextBufferRenderable`](TextBufferRenderable.md).[`_liveCount`](TextBufferRenderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`_opacity`](TextBufferRenderable.md#_opacity)
 
 ***
 
@@ -310,6 +318,26 @@ Cached line layout information.
 #### Inherited from
 
 [`TextBufferRenderable`](TextBufferRenderable.md).[`_positionType`](TextBufferRenderable.md#_positiontype)
+
+***
+
+### \_scrollX
+
+> `protected` **\_scrollX**: `number` = `0`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`_scrollX`](TextBufferRenderable.md#_scrollx)
+
+***
+
+### \_scrollY
+
+> `protected` **\_scrollY**: `number` = `0`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`_scrollY`](TextBufferRenderable.md#_scrolly)
 
 ***
 
@@ -645,7 +673,7 @@ View layer that handles layout, wrapping, and viewport management.
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1391,6 +1419,38 @@ Provides data about line starts, widths, and wrapping used by components like [L
 
 ***
 
+### maxScrollX
+
+#### Get Signature
+
+> **get** **maxScrollX**(): `number`
+
+##### Returns
+
+`number`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`maxScrollX`](TextBufferRenderable.md#maxscrollx)
+
+***
+
+### maxScrollY
+
+#### Get Signature
+
+> **get** **maxScrollY**(): `number`
+
+##### Returns
+
+`number`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`maxScrollY`](TextBufferRenderable.md#maxscrolly)
+
+***
+
 ### maxWidth
 
 #### Set Signature
@@ -1791,6 +1851,36 @@ Provides data about line starts, widths, and wrapping used by components like [L
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`opacity`](TextBufferRenderable.md#opacity)
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2017,6 +2107,68 @@ The complete text content as a plain string without styling.
 
 ***
 
+### scrollHeight
+
+#### Get Signature
+
+> **get** **scrollHeight**(): `number`
+
+##### Returns
+
+`number`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`scrollHeight`](TextBufferRenderable.md#scrollheight)
+
+***
+
+### scrollWidth
+
+#### Get Signature
+
+> **get** **scrollWidth**(): `number`
+
+##### Returns
+
+`number`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`scrollWidth`](TextBufferRenderable.md#scrollwidth)
+
+***
+
+### scrollX
+
+#### Get Signature
+
+> **get** **scrollX**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **scrollX**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`scrollX`](TextBufferRenderable.md#scrollx)
+
+***
+
 ### scrollY
 
 #### Get Signature
@@ -2027,12 +2179,25 @@ Current vertical scroll offset.
 
 ##### Remarks
 
-TextBufferRenderable doesn't scroll by default (always returns 0).
-Override in subclasses that support scrolling.
+Controls which line is at the top of the visible viewport.
 
 ##### Returns
 
 `number`
+
+#### Set Signature
+
+> **set** **scrollY**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
 
 #### Inherited from
 
@@ -2277,6 +2442,28 @@ Total character length of the text buffer.
 #### Inherited from
 
 [`TextBufferRenderable`](TextBufferRenderable.md).[`translateY`](TextBufferRenderable.md#translatey)
+
+***
+
+### virtualLineCount
+
+#### Get Signature
+
+> **get** **virtualLineCount**(): `number`
+
+Total number of virtual (visual) lines after wrapping.
+
+##### Remarks
+
+This accounts for line wrapping and may be greater than [lineCount](TextBufferRenderable.md#linecount).
+
+##### Returns
+
+`number`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`virtualLineCount`](TextBufferRenderable.md#virtuallinecount)
 
 ***
 
@@ -2656,11 +2843,11 @@ Total character length of the text buffer.
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -2804,7 +2991,7 @@ Object with `start` and `end` offsets, or null if no selection
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 
@@ -2833,6 +3020,26 @@ Object with `start` and `end` offsets, or null if no selection
 #### Inherited from
 
 [`TextBufferRenderable`](TextBufferRenderable.md).[`handlePaste`](TextBufferRenderable.md#handlepaste)
+
+***
+
+### handleScroll()
+
+> `protected` **handleScroll**(`event`): `void`
+
+#### Parameters
+
+##### event
+
+`any`
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`handleScroll`](TextBufferRenderable.md#handlescroll)
 
 ***
 
@@ -3012,7 +3219,7 @@ Checks if any text is currently selected.
 
 ##### event
 
-[`MouseEvent`](MouseEvent.md)
+`any`
 
 #### Returns
 
@@ -3349,3 +3556,17 @@ Global Y coordinate
 #### Inherited from
 
 [`TextBufferRenderable`](TextBufferRenderable.md).[`updateTextInfo`](TextBufferRenderable.md#updatetextinfo)
+
+***
+
+### updateViewportOffset()
+
+> `protected` **updateViewportOffset**(): `void`
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[`TextBufferRenderable`](TextBufferRenderable.md).[`updateViewportOffset`](TextBufferRenderable.md#updateviewportoffset)

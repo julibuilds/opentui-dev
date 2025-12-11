@@ -22,12 +22,6 @@
 
 ***
 
-### keyrepeat
-
-> **keyrepeat**: \[[`KeyEvent`](../classes/KeyEvent.md)\]
-
-***
-
 ### paste
 
 > **paste**: \[[`PasteEvent`](../classes/PasteEvent.md)\]

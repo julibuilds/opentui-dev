@@ -9,17 +9,20 @@
 ## Interfaces
 
 - [OpenTUIComponents](interfaces/OpenTUIComponents.md)
+- [UseKeyboardOptions](interfaces/UseKeyboardOptions.md)
 
 ## Type Aliases
 
 - [AsciiFontProps](type-aliases/AsciiFontProps.md)
 - [BoxProps](type-aliases/BoxProps.md)
 - [CodeProps](type-aliases/CodeProps.md)
+- [DiffProps](type-aliases/DiffProps.md)
 - [ExtendedComponentProps](type-aliases/ExtendedComponentProps.md)
 - [ExtendedIntrinsicElements](type-aliases/ExtendedIntrinsicElements.md)
 - [GetNonStyledProperties](type-aliases/GetNonStyledProperties.md)
 - [InputProps](type-aliases/InputProps.md)
 - [LineBreakProps](type-aliases/LineBreakProps.md)
+- [LineNumberProps](type-aliases/LineNumberProps.md)
 - [NonStyledProps](type-aliases/NonStyledProps.md)
 - [ReactProps](type-aliases/ReactProps.md)
 - [RenderableConstructor](type-aliases/RenderableConstructor.md)

@@ -64,6 +64,22 @@
 
 ***
 
+### bufferClearOpacity()
+
+> **bufferClearOpacity**: (`buffer`) => `void`
+
+#### Parameters
+
+##### buffer
+
+`Pointer`
+
+#### Returns
+
+`void`
+
+***
+
 ### bufferClearScissorRects()
 
 > **bufferClearScissorRects**: (`buffer`) => `void`
@@ -432,6 +448,22 @@
 
 ***
 
+### bufferGetCurrentOpacity()
+
+> **bufferGetCurrentOpacity**: (`buffer`) => `number`
+
+#### Parameters
+
+##### buffer
+
+`Pointer`
+
+#### Returns
+
+`number`
+
+***
+
 ### bufferGetFgPtr()
 
 > **bufferGetFgPtr**: (`buffer`) => `Pointer`
@@ -496,6 +528,22 @@
 
 ***
 
+### bufferPopOpacity()
+
+> **bufferPopOpacity**: (`buffer`) => `void`
+
+#### Parameters
+
+##### buffer
+
+`Pointer`
+
+#### Returns
+
+`void`
+
+***
+
 ### bufferPopScissorRect()
 
 > **bufferPopScissorRect**: (`buffer`) => `void`
@@ -505,6 +553,26 @@
 ##### buffer
 
 `Pointer`
+
+#### Returns
+
+`void`
+
+***
+
+### bufferPushOpacity()
+
+> **bufferPushOpacity**: (`buffer`, `opacity`) => `void`
+
+#### Parameters
+
+##### buffer
+
+`Pointer`
+
+##### opacity
+
+`number`
 
 #### Returns
 
@@ -1734,6 +1802,46 @@
 
 ***
 
+### editBufferReplaceText()
+
+> **editBufferReplaceText**: (`buffer`, `textBytes`) => `void`
+
+#### Parameters
+
+##### buffer
+
+`Pointer`
+
+##### textBytes
+
+`Uint8Array`
+
+#### Returns
+
+`void`
+
+***
+
+### editBufferReplaceTextFromMem()
+
+> **editBufferReplaceTextFromMem**: (`buffer`, `memId`) => `void`
+
+#### Parameters
+
+##### buffer
+
+`Pointer`
+
+##### memId
+
+`number`
+
+#### Returns
+
+`void`
+
+***
+
 ### editBufferSetCursor()
 
 > **editBufferSetCursor**: (`buffer`, `line`, `col`) => `void`
@@ -1804,7 +1912,7 @@
 
 ### editBufferSetText()
 
-> **editBufferSetText**: (`buffer`, `textBytes`, `retainHistory?`) => `void`
+> **editBufferSetText**: (`buffer`, `textBytes`) => `void`
 
 #### Parameters
 
@@ -1816,10 +1924,6 @@
 
 `Uint8Array`
 
-##### retainHistory?
-
-`boolean`
-
 #### Returns
 
 `void`
@@ -1828,7 +1932,7 @@
 
 ### editBufferSetTextFromMem()
 
-> **editBufferSetTextFromMem**: (`buffer`, `memId`, `retainHistory?`) => `void`
+> **editBufferSetTextFromMem**: (`buffer`, `memId`) => `void`
 
 #### Parameters
 
@@ -1839,10 +1943,6 @@
 ##### memId
 
 `number`
-
-##### retainHistory?
-
-`boolean`
 
 #### Returns
 
@@ -2137,6 +2237,38 @@
 ### editorViewGetVisualCursor()
 
 > **editorViewGetVisualCursor**: (`view`) => [`VisualCursor`](VisualCursor.md)
+
+#### Parameters
+
+##### view
+
+`Pointer`
+
+#### Returns
+
+[`VisualCursor`](VisualCursor.md)
+
+***
+
+### editorViewGetVisualEOL()
+
+> **editorViewGetVisualEOL**: (`view`) => [`VisualCursor`](VisualCursor.md)
+
+#### Parameters
+
+##### view
+
+`Pointer`
+
+#### Returns
+
+[`VisualCursor`](VisualCursor.md)
+
+***
+
+### editorViewGetVisualSOL()
+
+> **editorViewGetVisualSOL**: (`view`) => [`VisualCursor`](VisualCursor.md)
 
 #### Parameters
 
@@ -2584,6 +2716,22 @@
 
 ***
 
+### getKittyKeyboardFlags()
+
+> **getKittyKeyboardFlags**: (`renderer`) => `number`
+
+#### Parameters
+
+##### renderer
+
+`Pointer`
+
+#### Returns
+
+`number`
+
+***
+
 ### getNextBuffer()
 
 > **getNextBuffer**: (`renderer`) => [`OptimizedBuffer`](../classes/OptimizedBuffer.md)
@@ -2633,22 +2781,6 @@
 #### Returns
 
 `any`
-
-***
-
-### getUseKittyKeyboard()
-
-> **getUseKittyKeyboard**: (`renderer`) => `boolean`
-
-#### Parameters
-
-##### renderer
-
-`Pointer`
-
-#### Returns
-
-`boolean`
 
 ***
 
@@ -2940,6 +3072,26 @@
 
 ***
 
+### setKittyKeyboardFlags()
+
+> **setKittyKeyboardFlags**: (`renderer`, `flags`) => `void`
+
+#### Parameters
+
+##### renderer
+
+`Pointer`
+
+##### flags
+
+`number`
+
+#### Returns
+
+`void`
+
+***
+
 ### setRenderOffset()
 
 > **setRenderOffset**: (`renderer`, `offset`) => `void`
@@ -2991,26 +3143,6 @@
 `Pointer`
 
 ##### useAlternateScreen
-
-`boolean`
-
-#### Returns
-
-`void`
-
-***
-
-### setUseKittyKeyboard()
-
-> **setUseKittyKeyboard**: (`renderer`, `use`) => `void`
-
-#### Parameters
-
-##### renderer
-
-`Pointer`
-
-##### use
 
 `boolean`
 
@@ -3800,6 +3932,22 @@
 
 ***
 
+### textBufferViewGetVirtualLineCount()
+
+> **textBufferViewGetVirtualLineCount**: (`view`) => `number`
+
+#### Parameters
+
+##### view
+
+`Pointer`
+
+#### Returns
+
+`number`
+
+***
+
 ### textBufferViewMeasureForDimensions()
 
 > **textBufferViewMeasureForDimensions**: (`view`, `width`, `height`) => `object`
@@ -3969,6 +4117,38 @@
 ##### color
 
 [`RGBA`](../classes/RGBA.md)
+
+#### Returns
+
+`void`
+
+***
+
+### textBufferViewSetViewport()
+
+> **textBufferViewSetViewport**: (`view`, `x`, `y`, `width`, `height`) => `void`
+
+#### Parameters
+
+##### view
+
+`Pointer`
+
+##### x
+
+`number`
+
+##### y
+
+`number`
+
+##### width
+
+`number`
+
+##### height
+
+`number`
 
 #### Returns
 

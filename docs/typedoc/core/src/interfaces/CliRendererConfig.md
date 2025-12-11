@@ -50,6 +50,14 @@ Whether to automatically exit the process when Ctrl+C is pressed (default: false
 
 ***
 
+### exitSignals?
+
+> `optional` **exitSignals**: `Signals`[]
+
+Additional signals to listen for to trigger process exit
+
+***
+
 ### experimental\_splitHeight?
 
 > `optional` **experimental\_splitHeight**: `number`
@@ -63,6 +71,14 @@ Experimental: Split screen height for console/renderer
 > `optional` **gatherStats**: `boolean`
 
 Whether to gather rendering statistics (default: false)
+
+***
+
+### maxFps?
+
+> `optional` **maxFps**: `number`
+
+Maximum frames per second cap
 
 ***
 
@@ -184,9 +200,20 @@ Whether to enable the debug console (default: true)
 
 ### useKittyKeyboard?
 
-> `optional` **useKittyKeyboard**: `boolean`
+> `optional` **useKittyKeyboard**: `object`
 
-Whether to use Kitty keyboard protocol for enhanced key handling (default: true)
+Kitty keyboard protocol configuration.
+
+#### events?
+
+> `optional` **events**: `boolean`
+
+Enable event types (press/repeat/release)
+
+#### Remarks
+
+Set to null to disable, or provide configuration object to enable.
+When enabled, provides enhanced key handling with event types.
 
 ***
 

@@ -116,6 +116,16 @@
 
 ***
 
+### getVirtualLineCount()
+
+> **getVirtualLineCount**(): `number`
+
+#### Returns
+
+`number`
+
+***
+
 ### hasSelection()
 
 > **hasSelection**(): `boolean`
@@ -263,6 +273,34 @@
 ##### color
 
 [`RGBA`](RGBA.md)
+
+#### Returns
+
+`void`
+
+***
+
+### setViewport()
+
+> **setViewport**(`x`, `y`, `width`, `height`): `void`
+
+#### Parameters
+
+##### x
+
+`number`
+
+##### y
+
+`number`
+
+##### width
+
+`number`
+
+##### height
+
+`number`
 
 #### Returns
 

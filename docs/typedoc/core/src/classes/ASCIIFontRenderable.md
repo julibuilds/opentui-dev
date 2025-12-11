@@ -180,6 +180,16 @@ const rainbow = new ASCIIFontRenderable(ctx, {
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+[`FrameBufferRenderable`](FrameBufferRenderable.md).[`_isDestroyed`](FrameBufferRenderable.md#_isdestroyed)
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -187,6 +197,16 @@ const rainbow = new ASCIIFontRenderable(ctx, {
 #### Inherited from
 
 [`FrameBufferRenderable`](FrameBufferRenderable.md).[`_liveCount`](FrameBufferRenderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`FrameBufferRenderable`](FrameBufferRenderable.md).[`_opacity`](FrameBufferRenderable.md#_opacity)
 
 ***
 
@@ -504,7 +524,7 @@ Whether text can be selected.
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1600,6 +1620,36 @@ See [ASCIIFontName](../type-aliases/ASCIIFontName.md) for available fonts. Chang
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`FrameBufferRenderable`](FrameBufferRenderable.md).[`opacity`](FrameBufferRenderable.md#opacity)
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2270,11 +2320,11 @@ Destroys the framebuffer and cleans up resources.
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -2378,7 +2428,7 @@ Destroys the framebuffer and cleans up resources.
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 

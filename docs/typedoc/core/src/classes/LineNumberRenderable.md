@@ -14,7 +14,7 @@ LineNumberRenderable wraps a target renderable (typically a Code or EditBufferRe
 and displays line numbers alongside it. Features include:
 
 - Automatic width adjustment based on line count
-- Custom line background colors for highlighting
+- Custom line background colors for highlighting (with separate gutter/content colors)
 - Line signs (decorative markers before/after line numbers)
 - Full-width line background colors that extend into content area
 - Automatic handling of wrapped lines (continuation lines don't show numbers)
@@ -35,8 +35,11 @@ const code = new Code(ctx, {
 
 lineNumbers.add(code); // Add code as target
 
-// Highlight line 2
+// Highlight line 2 with same color for gutter and content
 lineNumbers.setLineColor(1, "#264f78");
+
+// Or use different colors for gutter and content
+lineNumbers.setLineColor(1, { gutter: "#264f78", content: "#1e3a5f" });
 
 // Add error marker on line 2
 lineNumbers.setLineSign(1, {
@@ -165,6 +168,16 @@ lineNumbers.setLineSign(1, {
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_isDestroyed`](Renderable.md#_isdestroyed)
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -172,6 +185,16 @@ lineNumbers.setLineSign(1, {
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`_liveCount`](Renderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_opacity`](Renderable.md#_opacity)
 
 ***
 
@@ -447,7 +470,7 @@ lineNumbers.setLineSign(1, {
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -838,6 +861,32 @@ lineNumbers.setLineSign(1, {
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`left`](Renderable.md#left)
+
+***
+
+### lineNumberOffset
+
+#### Get Signature
+
+> **get** **lineNumberOffset**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **lineNumberOffset**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
 
 ***
 
@@ -1416,6 +1465,36 @@ lineNumbers.setLineSign(1, {
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`onSizeChange`](Renderable.md#onsizechange)
+
+***
+
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`opacity`](Renderable.md#opacity)
 
 ***
 
@@ -2155,13 +2234,23 @@ The line index (0-based)
 
 ***
 
-### getLayoutNode()
+### getHideLineNumbers()
 
-> **getLayoutNode**(): `Node`
+> **getHideLineNumbers**(): `Set`\<`number`\>
 
 #### Returns
 
-`Node`
+`Set`\<`number`\>
+
+***
+
+### getLayoutNode()
+
+> **getLayoutNode**(): `YogaNode`
+
+#### Returns
+
+`YogaNode`
 
 #### Inherited from
 
@@ -2171,13 +2260,33 @@ The line index (0-based)
 
 ### getLineColors()
 
-> **getLineColors**(): `Map`\<`number`, [`RGBA`](RGBA.md)\>
+> **getLineColors**(): `object`
 
-Gets the current map of line colors.
+Gets the current maps of line colors.
 
 #### Returns
 
-`Map`\<`number`, [`RGBA`](RGBA.md)\>
+`object`
+
+An object containing separate maps for gutter and content colors
+
+##### content
+
+> **content**: `Map`\<`number`, [`RGBA`](RGBA.md)\>
+
+##### gutter
+
+> **gutter**: `Map`\<`number`, [`RGBA`](RGBA.md)\>
+
+***
+
+### getLineNumbers()
+
+> **getLineNumbers**(): `Map`\<`number`, `number`\>
+
+#### Returns
+
+`Map`\<`number`, `number`\>
 
 ***
 
@@ -2289,7 +2398,7 @@ Gets the current map of line signs.
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 
@@ -2631,6 +2740,22 @@ If you need to request a render during a render pass, use process.nextTick.
 
 ***
 
+### setHideLineNumbers()
+
+> **setHideLineNumbers**(`hideLineNumbers`): `void`
+
+#### Parameters
+
+##### hideLineNumbers
+
+`Set`\<`number`\>
+
+#### Returns
+
+`void`
+
+***
+
 ### setLineColor()
 
 > **setLineColor**(`line`, `color`): `void`
@@ -2647,9 +2772,9 @@ The line index (0-based)
 
 ##### color
 
-The background color to apply
+The background color to apply, or a [LineColorConfig](../interfaces/LineColorConfig.md) for separate gutter/content colors
 
-`string` | [`RGBA`](RGBA.md)
+`string` | [`RGBA`](RGBA.md) | [`LineColorConfig`](../interfaces/LineColorConfig.md)
 
 #### Returns
 
@@ -2658,7 +2783,9 @@ The background color to apply
 #### Remarks
 
 The background color extends across the full width of the LineNumberRenderable,
-including both the gutter and content areas.
+including both the gutter and content areas. When a simple color is provided,
+the content area uses a slightly darker version. Use [LineColorConfig](../interfaces/LineColorConfig.md)
+for precise control over gutter and content colors.
 
 ***
 
@@ -2672,9 +2799,25 @@ Sets multiple line colors at once, replacing existing ones.
 
 ##### lineColors
 
-`Map`\<`number`, `string` \| [`RGBA`](RGBA.md)\>
+`Map`\<`number`, `string` \| [`RGBA`](RGBA.md) \| [`LineColorConfig`](../interfaces/LineColorConfig.md)\>
 
-Map of line indices to colors
+Map of line indices to colors or [LineColorConfig](../interfaces/LineColorConfig.md) objects
+
+#### Returns
+
+`void`
+
+***
+
+### setLineNumbers()
+
+> **setLineNumbers**(`lineNumbers`): `void`
+
+#### Parameters
+
+##### lineNumbers
+
+`Map`\<`number`, `number`\>
 
 #### Returns
 

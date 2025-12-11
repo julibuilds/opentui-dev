@@ -161,6 +161,16 @@ class CustomGraphic extends FrameBufferRenderable {
 
 ***
 
+### \_isDestroyed
+
+> `protected` **\_isDestroyed**: `boolean` = `false`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_isDestroyed`](Renderable.md#_isdestroyed)
+
+***
+
 ### \_liveCount
 
 > `protected` **\_liveCount**: `number` = `0`
@@ -168,6 +178,16 @@ class CustomGraphic extends FrameBufferRenderable {
 #### Inherited from
 
 [`Renderable`](Renderable.md).[`_liveCount`](Renderable.md#_livecount)
+
+***
+
+### \_opacity
+
+> `protected` **\_opacity**: `number` = `1.0`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`_opacity`](Renderable.md#_opacity)
 
 ***
 
@@ -453,7 +473,7 @@ Whether alpha blending is enabled for compositing.
 
 ### yogaNode
 
-> `protected` **yogaNode**: `Node`
+> `protected` **yogaNode**: `YogaNode`
 
 #### Inherited from
 
@@ -1425,6 +1445,36 @@ Whether alpha blending is enabled for compositing.
 
 ***
 
+### opacity
+
+#### Get Signature
+
+> **get** **opacity**(): `number`
+
+##### Returns
+
+`number`
+
+#### Set Signature
+
+> **set** **opacity**(`value`): `void`
+
+##### Parameters
+
+###### value
+
+`number`
+
+##### Returns
+
+`void`
+
+#### Inherited from
+
+[`Renderable`](Renderable.md).[`opacity`](Renderable.md#opacity)
+
+***
+
 ### overflow
 
 #### Get Signature
@@ -2063,11 +2113,11 @@ Destroys the framebuffer and cleans up resources.
 
 ### getLayoutNode()
 
-> **getLayoutNode**(): `Node`
+> **getLayoutNode**(): `YogaNode`
 
 #### Returns
 
-`Node`
+`YogaNode`
 
 #### Inherited from
 
@@ -2171,7 +2221,7 @@ Destroys the framebuffer and cleans up resources.
 
 ##### key
 
-`string` | [`KeyEvent`](KeyEvent.md)
+[`KeyEvent`](KeyEvent.md)
 
 #### Returns
 

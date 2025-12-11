@@ -220,6 +220,16 @@ buffer.clear(RGBA.blue())
 
 ***
 
+### clearOpacity()
+
+> **clearOpacity**(): `void`
+
+#### Returns
+
+`void`
+
+***
+
 ### clearScissorRects()
 
 > **clearScissorRects**(): `void`
@@ -757,6 +767,16 @@ buffer.fillRect(10, 5, 20, 5, RGBA.red())
 
 ***
 
+### getCurrentOpacity()
+
+> **getCurrentOpacity**(): `number`
+
+#### Returns
+
+`number`
+
+***
+
 ### getNativeId()
 
 > **getNativeId**(): `string`
@@ -783,11 +803,37 @@ buffer.fillRect(10, 5, 20, 5, RGBA.red())
 
 ***
 
+### popOpacity()
+
+> **popOpacity**(): `void`
+
+#### Returns
+
+`void`
+
+***
+
 ### popScissorRect()
 
 > **popScissorRect**(): `void`
 
 Removes the most recently pushed scissor rectangle from the stack.
+
+#### Returns
+
+`void`
+
+***
+
+### pushOpacity()
+
+> **pushOpacity**(`opacity`): `void`
+
+#### Parameters
+
+##### opacity
+
+`number`
 
 #### Returns
 

@@ -148,6 +148,16 @@
 
 ***
 
+### repeated?
+
+> `optional` **repeated**: `boolean`
+
+#### Implementation of
+
+[`ParsedKey`](../interfaces/ParsedKey.md).[`repeated`](../interfaces/ParsedKey.md#repeated)
+
+***
+
 ### sequence
 
 > **sequence**: `string`
