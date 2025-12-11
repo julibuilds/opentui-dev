@@ -19,58 +19,114 @@ These packages are maintained upstream and should not be included in this fork.
 
 ## Merging Upstream Changes
 
-When merging changes from the upstream `sst/opentui:main` repository:
+Use the `/merge-upstream` slash command to merge changes from `sst/opentui:main`. The command contains full instructions for the merge process.
 
-### Setup
+### Quick Reference
 ```bash
-# Add upstream remote (only needed once)
+# Setup (only needed once)
 git remote add upstream https://github.com/sst/opentui.git
-
-# Fetch upstream changes
-git fetch upstream main
 ```
 
-### Merge Process
-```bash
-# Start merge without auto-committing
-git merge upstream/main --no-commit --no-ff
+### Performance Tips
 
-# Check what changed
-git diff HEAD..upstream/main --stat packages/core packages/react
+**Use parallel agents** when resolving 3+ conflict files - launch separate agents for each file to resolve simultaneously.
+
+**Accept `--theirs` for non-TSDoc files:**
+```bash
+git checkout --theirs bun.lock && git add bun.lock
 ```
 
-### Conflict Resolution
-1. **Focus on managed packages**: Only review changes in `packages/core` and `packages/react`
-2. **Preserve TSDoc**: All TSDoc comments (`@public`, `@remarks`, `@example`, etc.) must be preserved
-3. **Accept upstream code changes**: Take upstream's functional code changes while keeping our TSDoc
-4. **Remove excluded packages**: If merge includes changes to solid/vue/go:
-   ```bash
-   git rm -r packages/solid packages/vue packages/go
-   ```
-
-### Verification
-Before committing, verify TSDoc is intact:
+**Read only conflict sections** instead of full files:
 ```bash
-# Check for TSDoc tags in key files
-grep -r "@public\|@remarks\|@example" packages/core/src/ | head -20
-grep -r "@public\|@remarks\|@example" packages/react/src/ | head -20
+grep -B5 -A30 "<<<<<<" file.ts
 ```
 
-### Complete Merge
+**Verify TSDoc count** before and after:
 ```bash
-git commit -m "Merge upstream sst/opentui:main changes
-
-Merged upstream changes focusing on packages/core and packages/react.
-Preserved all TSDoc additions while incorporating upstream fixes.
-
-Excluded packages/solid, packages/vue, and packages/go as they are not managed in this fork."
+grep -r "@public\|@remarks\|@example" packages/core/src/ packages/react/src/ --include="*.ts" --include="*.tsx" | wc -l
 ```
 
 ## TSDoc Guidelines
 
-When adding or updating TSDoc:
-- Use `@public` for all exported APIs
-- Add `@remarks` for important implementation details
-- Include `@example` blocks for complex APIs
-- Document all parameters with descriptions
-- Mark internal/private APIs appropriately
+### Required Tags
+- `@public` - All exported APIs (interfaces, types, classes, functions)
+- `@remarks` - Important implementation details, usage notes
+- `@example` - Code examples for complex APIs
+- `@param` - All function/method parameters with descriptions
+- `@returns` - Return value descriptions where non-obvious
+
+### Templates
+
+**Interface/Options:**
+```typescript
+/**
+ * Configuration options for {@link ComponentName}.
+ *
+ * @public
+ */
+export interface ComponentOptions {
+  /** Property description. @defaultValue value */
+  prop?: Type
+}
+```
+
+**Class:**
+```typescript
+/**
+ * Brief description of the class.
+ *
+ * @remarks
+ * - Feature 1
+ * - Feature 2
+ *
+ * @example
+ * ```typescript
+ * const instance = new ClassName(ctx, { option: value })
+ * ```
+ *
+ * @public
+ */
+export class ClassName { }
+```
+
+**React Hook:**
+```typescript
+/**
+ * Hook for handling X.
+ *
+ * @remarks
+ * Additional details about behavior.
+ *
+ * @param handler - Callback invoked on events
+ * @param options - Configuration options
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   useHook((event) => console.log(event))
+ *   return <text>Example</text>
+ * }
+ * ```
+ *
+ * @public
+ */
+```
+
+**Type/Union:**
+```typescript
+/**
+ * Brief description of the type.
+ *
+ * @public
+ */
+export type ActionType = "action-a" | "action-b" | "action-c"
+```
+
+### Internal APIs
+Use `@internal` for non-public exports that shouldn't be documented:
+```typescript
+/**
+ * Internal helper function.
+ * @internal
+ */
+```
