@@ -91,6 +91,11 @@ export class TextBufferView {
     this.lib.textBufferViewSetViewportSize(this.viewPtr, width, height)
   }
 
+  public setViewport(x: number, y: number, width: number, height: number): void {
+    this.guard()
+    this.lib.textBufferViewSetViewport(this.viewPtr, x, y, width, height)
+  }
+
   public get lineInfo(): LineInfo {
     this.guard()
     return this.lib.textBufferViewGetLineInfo(this.viewPtr)
@@ -139,6 +144,11 @@ export class TextBufferView {
   public measureForDimensions(width: number, height: number): { lineCount: number; maxWidth: number } | null {
     this.guard()
     return this.lib.textBufferViewMeasureForDimensions(this.viewPtr, width, height)
+  }
+
+  public getVirtualLineCount(): number {
+    this.guard()
+    return this.lib.textBufferViewGetVirtualLineCount(this.viewPtr)
   }
 
   public destroy(): void {

@@ -75,7 +75,7 @@ async function main() {
   renderer = await createCliRenderer({
     exitOnCtrlC: true,
     targetFps: 60,
-    useKittyKeyboard: true,
+    useKittyKeyboard: { events: true },
     prependInputHandlers,
   })
 
@@ -133,10 +133,6 @@ async function main() {
 
   renderer.keyInput.on("keyrelease", (event) => {
     addEvent("keyrelease", event)
-  })
-
-  renderer.keyInput.on("keyrepeat", (event) => {
-    addEvent("keyrepeat", event)
   })
 
   renderer.keyInput.on("paste", (event) => {

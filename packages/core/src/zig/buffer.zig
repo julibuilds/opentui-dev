@@ -136,6 +136,7 @@ pub const OptimizedBuffer = struct {
     width_method: utf8.WidthMethod,
     id: []const u8,
     scissor_stack: std.ArrayList(ClipRect),
+    opacity_stack: std.ArrayList(f32),
 
     const InitOptions = struct {
         respectAlpha: bool = false,
@@ -161,6 +162,9 @@ pub const OptimizedBuffer = struct {
         var scissor_stack = std.ArrayList(ClipRect).init(allocator);
         errdefer scissor_stack.deinit();
 
+        var opacity_stack = std.ArrayList(f32).init(allocator);
+        errdefer opacity_stack.deinit();
+
         self.* = .{
             .buffer = .{
                 .char = allocator.alloc(u32, size) catch return BufferError.OutOfMemory,
@@ -177,6 +181,7 @@ pub const OptimizedBuffer = struct {
             .width_method = options.width_method,
             .id = owned_id,
             .scissor_stack = scissor_stack,
+            .opacity_stack = opacity_stack,
         };
 
         @memset(self.buffer.char, 0);
@@ -204,6 +209,7 @@ pub const OptimizedBuffer = struct {
     }
 
     pub fn deinit(self: *OptimizedBuffer) void {
+        self.opacity_stack.deinit();
         self.scissor_stack.deinit();
         self.grapheme_tracker.deinit();
         self.allocator.free(self.buffer.char);
@@ -268,12 +274,24 @@ pub const OptimizedBuffer = struct {
     }
 
     pub fn pushScissorRect(self: *OptimizedBuffer, x: i32, y: i32, width: u32, height: u32) !void {
-        const rect = ClipRect{
+        var rect = ClipRect{
             .x = x,
             .y = y,
             .width = width,
             .height = height,
         };
+
+        // Intersect with current scissor (if any) so nested scissor rects always clip to parents.
+        if (self.getCurrentScissorRect() != null) {
+            const intersect = self.clipRectToScissor(rect.x, rect.y, rect.width, rect.height);
+            if (intersect) |clipped| {
+                rect = clipped;
+            } else {
+                // Completely outside current scissor; push a degenerate rect so nothing renders.
+                rect = ClipRect{ .x = 0, .y = 0, .width = 0, .height = 0 };
+            }
+        }
+
         try self.scissor_stack.append(rect);
     }
 
@@ -285,6 +303,31 @@ pub const OptimizedBuffer = struct {
 
     pub fn clearScissorRects(self: *OptimizedBuffer) void {
         self.scissor_stack.clearRetainingCapacity();
+    }
+
+    /// Get the current effective opacity (product of all stacked opacities)
+    pub fn getCurrentOpacity(self: *const OptimizedBuffer) f32 {
+        if (self.opacity_stack.items.len == 0) return 1.0;
+        return self.opacity_stack.items[self.opacity_stack.items.len - 1];
+    }
+
+    /// Push an opacity value onto the stack. The effective opacity is multiplied with the current.
+    pub fn pushOpacity(self: *OptimizedBuffer, opacity: f32) !void {
+        const current = self.getCurrentOpacity();
+        const effective = current * std.math.clamp(opacity, 0.0, 1.0);
+        try self.opacity_stack.append(effective);
+    }
+
+    /// Pop an opacity value from the stack
+    pub fn popOpacity(self: *OptimizedBuffer) void {
+        if (self.opacity_stack.items.len > 0) {
+            _ = self.opacity_stack.pop();
+        }
+    }
+
+    /// Clear all opacity values from the stack
+    pub fn clearOpacity(self: *OptimizedBuffer) void {
+        self.opacity_stack.clearRetainingCapacity();
     }
 
     pub fn resize(self: *OptimizedBuffer, width: u32, height: u32) BufferError!void {
@@ -565,7 +608,13 @@ pub const OptimizedBuffer = struct {
         attributes: u8,
     ) !void {
         if (!self.isPointInScissor(@intCast(x), @intCast(y))) return;
-        const overlayCell = Cell{ .char = char, .fg = fg, .bg = bg, .attributes = attributes };
+
+        // Apply current opacity from the stack
+        const opacity = self.getCurrentOpacity();
+        const effectiveFg = RGBA{ fg[0], fg[1], fg[2], fg[3] * opacity };
+        const effectiveBg = RGBA{ bg[0], bg[1], bg[2], bg[3] * opacity };
+
+        const overlayCell = Cell{ .char = char, .fg = effectiveFg, .bg = effectiveBg, .attributes = attributes };
 
         if (self.get(x, y)) |destCell| {
             const blendedCell = blendCells(overlayCell, destCell);
@@ -574,6 +623,7 @@ pub const OptimizedBuffer = struct {
             self.set(x, y, overlayCell);
         }
     }
+
 
     pub fn setCellWithAlphaBlendingRaw(
         self: *OptimizedBuffer,
@@ -585,7 +635,13 @@ pub const OptimizedBuffer = struct {
         attributes: u8,
     ) !void {
         if (!self.isPointInScissor(@intCast(x), @intCast(y))) return;
-        const overlayCell = Cell{ .char = char, .fg = fg, .bg = bg, .attributes = attributes };
+
+        // Apply current opacity from the stack
+        const opacity = self.getCurrentOpacity();
+        const effectiveFg = RGBA{ fg[0], fg[1], fg[2], fg[3] * opacity };
+        const effectiveBg = RGBA{ bg[0], bg[1], bg[2], bg[3] * opacity };
+
+        const overlayCell = Cell{ .char = char, .fg = effectiveFg, .bg = effectiveBg, .attributes = attributes };
 
         if (self.get(x, y)) |destCell| {
             const blendedCell = blendCells(overlayCell, destCell);
@@ -598,6 +654,7 @@ pub const OptimizedBuffer = struct {
             self.setRaw(x, y, overlayCell);
         }
     }
+
 
     pub fn drawChar(
         self: *OptimizedBuffer,
@@ -652,7 +709,8 @@ pub const OptimizedBuffer = struct {
         const clippedEndX = @min(endX, @as(u32, @intCast(clippedRect.x + @as(i32, @intCast(clippedRect.width)) - 1)));
         const clippedEndY = @min(endY, @as(u32, @intCast(clippedRect.y + @as(i32, @intCast(clippedRect.height)) - 1)));
 
-        const hasAlpha = isRGBAWithAlpha(bg);
+        const opacity = self.getCurrentOpacity();
+        const hasAlpha = isRGBAWithAlpha(bg) or opacity < 1.0;
 
         if (hasAlpha or self.grapheme_tracker.hasAny()) {
             var fillY = clippedStartY;
@@ -981,19 +1039,19 @@ pub const OptimizedBuffer = struct {
             var lineBg = text_buffer.default_bg orelse RGBA{ 0.0, 0.0, 0.0, 0.0 };
             var lineAttributes = text_buffer.default_attributes orelse 0;
 
-            while (span_idx < spans.len and spans[span_idx].next_col <= col_offset) {
+            // Find the span that contains the starting render position (col_offset + horizontal_offset)
+            const start_col = col_offset + horizontal_offset;
+            while (span_idx < spans.len and spans[span_idx].next_col <= start_col) {
                 span_idx += 1;
             }
 
             var next_change_col: u32 = if (span_idx < spans.len)
-                if (spans[span_idx].next_col > col_offset)
-                    spans[span_idx].next_col - col_offset
-                else
-                    std.math.maxInt(u32)
+                spans[span_idx].next_col
             else
                 std.math.maxInt(u32);
 
-            if (span_idx < spans.len and spans[span_idx].col <= col_offset and spans[span_idx].style_id != 0) {
+            // Apply the style at the starting position
+            if (span_idx < spans.len and spans[span_idx].col <= start_col and spans[span_idx].style_id != 0) {
                 if (text_buffer.getSyntaxStyle()) |style| {
                     if (style.resolveById(spans[span_idx].style_id)) |resolved_style| {
                         if (resolved_style.fg) |fg| lineFg = fg;
@@ -1092,9 +1150,10 @@ pub const OptimizedBuffer = struct {
                         continue;
                     }
 
-                    const virt_col_pos = @as(u32, @intCast(currentX - x));
+                    // Track the actual column position in the source line (including horizontal offset)
+                    const source_col_pos = col_offset + column_in_line;
 
-                    if (virt_col_pos >= next_change_col and span_idx + 1 < spans.len) {
+                    if (source_col_pos >= next_change_col and span_idx + 1 < spans.len) {
                         span_idx += 1;
                         const new_span = spans[span_idx];
 
@@ -1112,10 +1171,7 @@ pub const OptimizedBuffer = struct {
                             }
                         }
 
-                        next_change_col = if (new_span.next_col > col_offset)
-                            new_span.next_col - col_offset
-                        else
-                            std.math.maxInt(u32);
+                        next_change_col = new_span.next_col;
                     }
 
                     var finalFg = lineFg;

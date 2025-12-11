@@ -82,6 +82,8 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
   protected _tabIndicator?: string | number
   /** Color for tab indicator. */
   protected _tabIndicatorColor?: RGBA
+  protected _scrollX: number = 0
+  protected _scrollY: number = 0
 
   /** The underlying text storage and styling system. */
   protected textBuffer: TextBuffer
@@ -139,7 +141,40 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
       this.textBufferView.setWrapWidth(this.width)
     }
 
+    // Initialize viewport if dimensions are available
+    if (this.width > 0 && this.height > 0) {
+      this.textBufferView.setViewport(this._scrollX, this._scrollY, this.width, this.height)
+    }
+
     this.updateTextInfo()
+  }
+
+protected onMouseEvent(event: any): void {
+    if (event.type === "scroll") {
+      this.handleScroll(event)
+    }
+  }
+
+  protected handleScroll(event: any): void {
+    if (!event.scroll) return
+
+    const { direction, delta } = event.scroll
+
+    // Handle vertical scrolling
+    if (direction === "up") {
+      this.scrollY -= delta
+    } else if (direction === "down") {
+      this.scrollY += delta
+    }
+
+    // Handle horizontal scrolling (only when wrap mode is "none")
+    if (this._wrapMode === "none") {
+      if (direction === "left") {
+        this.scrollX -= delta
+      } else if (direction === "right") {
+        this.scrollX += delta
+      }
+    }
   }
 
   /**
@@ -162,15 +197,71 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
     return this.textBuffer.getLineCount()
   }
 
+/**
+   * Total number of virtual (visual) lines after wrapping.
+   *
+   * @remarks
+   * This accounts for line wrapping and may be greater than {@link lineCount}.
+   */
+  public get virtualLineCount(): number {
+    return this.textBufferView.getVirtualLineCount()
+  }
+
   /**
    * Current vertical scroll offset.
    *
    * @remarks
-   * TextBufferRenderable doesn't scroll by default (always returns 0).
-   * Override in subclasses that support scrolling.
+   * Controls which line is at the top of the visible viewport.
    */
   public get scrollY(): number {
-    return 0
+    return this._scrollY
+  }
+
+  public set scrollY(value: number) {
+    const maxScrollY = Math.max(0, this.scrollHeight - this.height)
+    const clamped = Math.max(0, Math.min(value, maxScrollY))
+    if (this._scrollY !== clamped) {
+      this._scrollY = clamped
+      this.updateViewportOffset()
+      this.requestRender()
+    }
+  }
+
+  public get scrollX(): number {
+    return this._scrollX
+  }
+
+  public set scrollX(value: number) {
+    const maxScrollX = Math.max(0, this.scrollWidth - this.width)
+    const clamped = Math.max(0, Math.min(value, maxScrollX))
+    if (this._scrollX !== clamped) {
+      this._scrollX = clamped
+      this.updateViewportOffset()
+      this.requestRender()
+    }
+  }
+
+  public get scrollWidth(): number {
+    return this.lineInfo.maxLineWidth
+  }
+
+  public get scrollHeight(): number {
+    return this.lineInfo.lineStarts.length
+  }
+
+  public get maxScrollY(): number {
+    return Math.max(0, this.scrollHeight - this.height)
+  }
+
+  public get maxScrollX(): number {
+    return Math.max(0, this.scrollWidth - this.width)
+  }
+
+  protected updateViewportOffset(): void {
+    // Update the viewport with the new scroll position
+    if (this.width > 0 && this.height > 0) {
+      this.textBufferView.setViewport(this._scrollX, this._scrollY, this.width, this.height)
+    }
   }
 
   /**
@@ -308,9 +399,12 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
   }
 
   protected onResize(width: number, height: number): void {
-    // Update viewport size to match renderable dimensions
-    // Note: setViewportSize automatically updates wrap_width via setViewport (see text-buffer-view.zig:178)
-    this.textBufferView.setViewportSize(width, height)
+    // Update viewport with current scroll position and new size
+    this.textBufferView.setViewport(this._scrollX, this._scrollY, width, height)
+
+    // Notify listeners (like LineNumberRenderable) that line info may have changed
+    // due to wrapping changes from the resize
+    this.updateTextInfo()
 
     if (this.lastLocalSelection) {
       const changed = this.updateLocalSelection(this.lastLocalSelection)
@@ -350,6 +444,7 @@ export abstract class TextBufferRenderable extends Renderable implements LineInf
 
     this.yogaNode.markDirty()
     this.requestRender()
+    this.emit("line-info-change")
   }
 
   // Undefined = 0,

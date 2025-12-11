@@ -2,6 +2,7 @@ import { Renderable, type RenderableOptions } from "../Renderable"
 import { OptimizedBuffer } from "../buffer"
 import type { RenderContext, LineInfoProvider } from "../types"
 import { RGBA, parseColor } from "../lib/RGBA"
+import { MeasureMode } from "yoga-layout"
 
 /**
  * Configuration for decorative signs displayed next to line numbers.
@@ -33,6 +34,23 @@ export interface LineSign {
 }
 
 /**
+ * Configuration for separate gutter and content background colors.
+ *
+ * @remarks
+ * Allows setting different background colors for the line number gutter
+ * and the content area. If only gutter is specified, content will use
+ * a darker version of the gutter color.
+ *
+ * @public
+ */
+export interface LineColorConfig {
+  /** Background color for the gutter area. */
+  gutter?: string | RGBA
+  /** Background color for the content area. */
+  content?: string | RGBA
+}
+
+/**
  * Configuration options for {@link LineNumberRenderable}.
  *
  * @public
@@ -49,9 +67,13 @@ export interface LineNumberOptions extends RenderableOptions<LineNumberRenderabl
   /** Right padding after line numbers. @defaultValue 1 */
   paddingRight?: number
   /** Map of line numbers to custom background colors for highlighting specific lines. */
-  lineColors?: Map<number, string | RGBA>
+  lineColors?: Map<number, string | RGBA | LineColorConfig>
   /** Map of line numbers to decorative signs (markers, icons). */
   lineSigns?: Map<number, LineSign>
+  lineNumberOffset?: number
+  hideLineNumbers?: Set<number>
+  lineNumbers?: Map<number, number>
+  showLineNumbers?: boolean
 }
 
 class GutterRenderable extends Renderable {
@@ -60,10 +82,16 @@ class GutterRenderable extends Renderable {
   private _bg: RGBA
   private _minWidth: number
   private _paddingRight: number
-  private _lineColors: Map<number, RGBA>
+  private _lineColorsGutter: Map<number, RGBA>
+  private _lineColorsContent: Map<number, RGBA>
   private _lineSigns: Map<number, LineSign>
+  private _lineNumberOffset: number
+  private _hideLineNumbers: Set<number>
+  private _lineNumbers: Map<number, number>
   private _maxBeforeWidth: number = 0
   private _maxAfterWidth: number = 0
+  private _lastKnownLineCount: number = 0
+  private _lastKnownScrollY: number = 0
 
   constructor(
     ctx: RenderContext,
@@ -73,8 +101,12 @@ class GutterRenderable extends Renderable {
       bg: RGBA
       minWidth: number
       paddingRight: number
-      lineColors: Map<number, RGBA>
+      lineColorsGutter: Map<number, RGBA>
+      lineColorsContent: Map<number, RGBA>
       lineSigns: Map<number, LineSign>
+      lineNumberOffset: number
+      hideLineNumbers: Set<number>
+      lineNumbers?: Map<number, number>
       id?: string
       buffered?: boolean
     },
@@ -92,10 +124,75 @@ class GutterRenderable extends Renderable {
     this._bg = options.bg
     this._minWidth = options.minWidth
     this._paddingRight = options.paddingRight
-    this._lineColors = options.lineColors
+    this._lineColorsGutter = options.lineColorsGutter
+    this._lineColorsContent = options.lineColorsContent
     this._lineSigns = options.lineSigns
+    this._lineNumberOffset = options.lineNumberOffset
+    this._hideLineNumbers = options.hideLineNumbers
+    this._lineNumbers = options.lineNumbers ?? new Map()
+    this._lastKnownLineCount = this.target.virtualLineCount
+    this._lastKnownScrollY = this.target.scrollY
     this.calculateSignWidths()
-    this.width = this.calculateWidth()
+    this.setupMeasureFunc()
+
+    // Use lifecycle pass to detect line count changes BEFORE layout
+    this.onLifecyclePass = () => {
+      const currentLineCount = this.target.virtualLineCount
+      if (currentLineCount !== this._lastKnownLineCount) {
+        this._lastKnownLineCount = currentLineCount
+        this.yogaNode.markDirty()
+        this.requestRender()
+      }
+    }
+  }
+
+  private setupMeasureFunc(): void {
+    const measureFunc = (
+      width: number,
+      widthMode: MeasureMode,
+      height: number,
+      heightMode: MeasureMode,
+    ): { width: number; height: number } => {
+      // Calculate the gutter width based on the target's line count
+      const gutterWidth = this.calculateWidth()
+
+      // Calculate gutter height based on target's actual virtual line count
+      // The gutter should match the height of the content it's numbering
+      const gutterHeight = this.target.virtualLineCount
+
+      // Return calculated dimensions based on content, not parent constraints
+      return {
+        width: gutterWidth,
+        height: gutterHeight,
+      }
+    }
+
+    this.yogaNode.setMeasureFunc(measureFunc)
+  }
+
+  public remeasure(): void {
+    // Mark the yoga node as dirty to trigger re-measurement
+    this.yogaNode.markDirty()
+  }
+
+  public setLineNumberOffset(offset: number): void {
+    if (this._lineNumberOffset !== offset) {
+      this._lineNumberOffset = offset
+      this.yogaNode.markDirty()
+      this.requestRender()
+    }
+  }
+
+  public setHideLineNumbers(hideLineNumbers: Set<number>): void {
+    this._hideLineNumbers = hideLineNumbers
+    this.yogaNode.markDirty()
+    this.requestRender()
+  }
+
+  public setLineNumbers(lineNumbers: Map<number, number>): void {
+    this._lineNumbers = lineNumbers
+    this.yogaNode.markDirty()
+    this.requestRender()
   }
 
   private calculateSignWidths(): void {
@@ -115,18 +212,32 @@ class GutterRenderable extends Renderable {
   }
 
   private calculateWidth(): number {
-    const totalLines = this.target.lineCount
-    const digits = totalLines > 0 ? Math.floor(Math.log10(totalLines)) + 1 : 1
+    const totalLines = this.target.virtualLineCount
+
+    // Find max line number, considering both calculated and custom line numbers
+    let maxLineNumber = totalLines + this._lineNumberOffset
+    if (this._lineNumbers.size > 0) {
+      for (const customLineNum of this._lineNumbers.values()) {
+        maxLineNumber = Math.max(maxLineNumber, customLineNum)
+      }
+    }
+
+    const digits = maxLineNumber > 0 ? Math.floor(Math.log10(maxLineNumber)) + 1 : 1
     const baseWidth = Math.max(this._minWidth, digits + this._paddingRight + 1) // +1 for left padding
     return baseWidth + this._maxBeforeWidth + this._maxAfterWidth
   }
 
-  public setLineColors(lineColors: Map<number, RGBA>): void {
-    this._lineColors = lineColors
+  public setLineColors(lineColorsGutter: Map<number, RGBA>, lineColorsContent: Map<number, RGBA>): void {
+    this._lineColorsGutter = lineColorsGutter
+    this._lineColorsContent = lineColorsContent
+    this.requestRender()
   }
 
-  public getLineColors(): Map<number, RGBA> {
-    return this._lineColors
+  public getLineColors(): { gutter: Map<number, RGBA>; content: Map<number, RGBA> } {
+    return {
+      gutter: this._lineColorsGutter,
+      content: this._lineColorsContent,
+    }
   }
 
   public setLineSigns(lineSigns: Map<number, LineSign>): void {
@@ -136,28 +247,33 @@ class GutterRenderable extends Renderable {
     this._lineSigns = lineSigns
     this.calculateSignWidths()
 
-    // Only recalculate width if sign widths changed
+    // Mark dirty if sign widths changed - this will trigger remeasure
     if (this._maxBeforeWidth !== oldMaxBefore || this._maxAfterWidth !== oldMaxAfter) {
-      const newWidth = this.calculateWidth()
-      if (this.width !== newWidth) {
-        this.width = newWidth
-      }
+      this.yogaNode.markDirty()
     }
+
+    // Always request render since signs themselves may have changed
+    this.requestRender()
   }
 
   public getLineSigns(): Map<number, LineSign> {
     return this._lineSigns
   }
 
-  protected onUpdate(deltaTime: number): void {
-    const newWidth = this.calculateWidth()
+  protected renderSelf(buffer: OptimizedBuffer): void {
+    // For buffered rendering, only re-render when dirty OR when scroll position changed
+    const currentScrollY = this.target.scrollY
+    const scrollChanged = currentScrollY !== this._lastKnownScrollY
 
-    if (this.width !== newWidth) {
-      this.width = newWidth
+    if (this.buffered && !this.isDirty && !scrollChanged) {
+      return
     }
+
+    this._lastKnownScrollY = currentScrollY
+    this.refreshFrameBuffer(buffer)
   }
 
-  protected renderSelf(buffer: OptimizedBuffer): void {
+  private refreshFrameBuffer(buffer: OptimizedBuffer): void {
     const startX = this.buffered ? 0 : this.x
     const startY = this.buffered ? 0 : this.y
 
@@ -191,7 +307,7 @@ class GutterRenderable extends Renderable {
       if (visualLineIndex >= sources.length) break
 
       const logicalLine = sources[visualLineIndex]
-      const lineBg = this._lineColors.get(logicalLine) ?? this._bg
+      const lineBg = this._lineColorsGutter.get(logicalLine) ?? this._bg
 
       // Fill background for this line if it has a custom color
       if (lineBg !== this._bg) {
@@ -218,14 +334,19 @@ class GutterRenderable extends Renderable {
           currentX += this._maxBeforeWidth
         }
 
-        // Draw line number (right-aligned in its space)
-        const lineNumStr = (logicalLine + 1).toString()
-        const lineNumWidth = lineNumStr.length
-        const availableSpace = this.width - this._maxBeforeWidth - this._maxAfterWidth - this._paddingRight
-        const lineNumX = startX + this._maxBeforeWidth + availableSpace - lineNumWidth
+        // Draw line number (right-aligned in its space with left padding of 1)
+        if (!this._hideLineNumbers.has(logicalLine)) {
+          // Use custom line number if provided, otherwise use calculated line number
+          const customLineNum = this._lineNumbers.get(logicalLine)
+          const lineNum = customLineNum !== undefined ? customLineNum : logicalLine + 1 + this._lineNumberOffset
+          const lineNumStr = lineNum.toString()
+          const lineNumWidth = lineNumStr.length
+          const availableSpace = this.width - this._maxBeforeWidth - this._maxAfterWidth - this._paddingRight
+          const lineNumX = startX + this._maxBeforeWidth + 1 + availableSpace - lineNumWidth - 1
 
-        if (lineNumX >= startX) {
-          buffer.drawText(lineNumStr, lineNumX, startY + i, this._fg, lineBg)
+          if (lineNumX >= startX + this._maxBeforeWidth + 1) {
+            buffer.drawText(lineNumStr, lineNumX, startY + i, this._fg, lineBg)
+          }
         }
 
         // Draw 'after' sign if present
@@ -241,6 +362,11 @@ class GutterRenderable extends Renderable {
   }
 }
 
+// Helper function to darken an RGBA color by 20%
+function darkenColor(color: RGBA): RGBA {
+  return RGBA.fromValues(color.r * 0.8, color.g * 0.8, color.b * 0.8, color.a)
+}
+
 /**
  * A renderable that displays line numbers in a gutter next to text content.
  *
@@ -249,7 +375,7 @@ class GutterRenderable extends Renderable {
  * and displays line numbers alongside it. Features include:
  *
  * - Automatic width adjustment based on line count
- * - Custom line background colors for highlighting
+ * - Custom line background colors for highlighting (with separate gutter/content colors)
  * - Line signs (decorative markers before/after line numbers)
  * - Full-width line background colors that extend into content area
  * - Automatic handling of wrapped lines (continuation lines don't show numbers)
@@ -269,8 +395,11 @@ class GutterRenderable extends Renderable {
  *
  * lineNumbers.add(code); // Add code as target
  *
- * // Highlight line 2
+ * // Highlight line 2 with same color for gutter and content
  * lineNumbers.setLineColor(1, "#264f78");
+ *
+ * // Or use different colors for gutter and content
+ * lineNumbers.setLineColor(1, { gutter: "#264f78", content: "#1e3a5f" });
  *
  * // Add error marker on line 2
  * lineNumbers.setLineSign(1, {
@@ -286,8 +415,10 @@ export class LineNumberRenderable extends Renderable {
   private gutter: GutterRenderable | null = null
   /** The target renderable being decorated with line numbers. */
   private target: (Renderable & LineInfoProvider) | null = null
-  /** Map of line indices to background colors. */
-  private _lineColors: Map<number, RGBA>
+  /** Map of line indices to gutter background colors. */
+  private _lineColorsGutter: Map<number, RGBA>
+  /** Map of line indices to content background colors. */
+  private _lineColorsContent: Map<number, RGBA>
   /** Map of line indices to decorative signs. */
   private _lineSigns: Map<number, LineSign>
   /** Foreground color for line numbers. */
@@ -298,24 +429,59 @@ export class LineNumberRenderable extends Renderable {
   private _minWidth: number
   /** Right padding in characters. */
   private _paddingRight: number
+  private _lineNumberOffset: number
+  private _hideLineNumbers: Set<number>
+  private _lineNumbers: Map<number, number>
   private _isDestroying: boolean = false
+  private handleLineInfoChange = (): void => {
+    // When line info changes in the target, remeasure the gutter
+    this.gutter?.remeasure()
+    this.requestRender()
+  }
+
+  private parseLineColor(line: number, color: string | RGBA | LineColorConfig): void {
+    if (typeof color === "object" && "gutter" in color) {
+      // LineColorConfig format
+      const config = color as LineColorConfig
+      if (config.gutter) {
+        this._lineColorsGutter.set(line, parseColor(config.gutter))
+      }
+      if (config.content) {
+        this._lineColorsContent.set(line, parseColor(config.content))
+      } else if (config.gutter) {
+        // If only gutter is specified, use a darker version for content
+        this._lineColorsContent.set(line, darkenColor(parseColor(config.gutter)))
+      }
+    } else {
+      // Simple format - same color for both, but content is darker
+      const parsedColor = parseColor(color as string | RGBA)
+      this._lineColorsGutter.set(line, parsedColor)
+      this._lineColorsContent.set(line, darkenColor(parsedColor))
+    }
+  }
 
   constructor(ctx: RenderContext, options: LineNumberOptions) {
     super(ctx, {
       ...options,
       flexDirection: "row",
-      alignItems: "stretch",
+      // CRITICAL:
+      // By forcing height=auto, we ensure the parent box properly accounts for our full height.
+      height: "auto",
     })
 
     this._fg = parseColor(options.fg ?? "#888888")
     this._bg = parseColor(options.bg ?? "transparent")
     this._minWidth = options.minWidth ?? 3
     this._paddingRight = options.paddingRight ?? 1
+    this._lineNumberOffset = options.lineNumberOffset ?? 0
+    this._hideLineNumbers = options.hideLineNumbers ?? new Set()
+    this._lineNumbers = options.lineNumbers ?? new Map()
 
-    this._lineColors = new Map<number, RGBA>()
+    this._lineColorsGutter = new Map<number, RGBA>()
+    this._lineColorsContent = new Map<number, RGBA>()
     if (options.lineColors) {
       for (const [line, color] of options.lineColors) {
-        this._lineColors.set(line, parseColor(color))
+        this.parseLineColor(line, color)
       }
     }
 
@@ -336,6 +502,8 @@ export class LineNumberRenderable extends Renderable {
     if (this.target === target) return
 
     if (this.target) {
+      // Remove event listener from old target
+      this.target.off("line-info-change", this.handleLineInfoChange)
       super.remove(this.target.id)
     }
 
@@ -346,13 +514,20 @@ export class LineNumberRenderable extends Renderable {
 
     this.target = target
 
+    // Listen for line info changes from target
+    this.target.on("line-info-change", this.handleLineInfoChange)
+
     this.gutter = new GutterRenderable(this.ctx, this.target, {
       fg: this._fg,
       bg: this._bg,
       minWidth: this._minWidth,
       paddingRight: this._paddingRight,
-      lineColors: this._lineColors,
+      lineColorsGutter: this._lineColorsGutter,
+      lineColorsContent: this._lineColorsContent,
       lineSigns: this._lineSigns,
+      lineNumberOffset: this._lineNumberOffset,
+      hideLineNumbers: this._hideLineNumbers,
+      lineNumbers: this._lineNumbers,
       id: this.id ? `${this.id}-gutter` : undefined,
       buffered: true,
     })
@@ -364,7 +539,13 @@ export class LineNumberRenderable extends Renderable {
   // Override add to intercept and set as target if it's a LineInfoProvider
   public override add(child: Renderable): number {
     // If this is a LineInfoProvider and we don't have a target yet, set it
-    if (!this.target && "lineInfo" in child && "lineCount" in child && "scrollY" in child) {
+    if (
+      !this.target &&
+      "lineInfo" in child &&
+      "lineCount" in child &&
+      "virtualLineCount" in child &&
+      "scrollY" in child
+    ) {
       this.setTarget(child as Renderable & LineInfoProvider)
       return this.getChildrenCount() - 1
     }
@@ -392,6 +573,10 @@ export class LineNumberRenderable extends Renderable {
   public override destroyRecursively(): void {
     this._isDestroying = true
 
+    if (this.target) {
+      this.target.off("line-info-change", this.handleLineInfoChange)
+    }
+
     super.destroyRecursively()
 
     this.gutter = null
@@ -400,6 +585,7 @@ export class LineNumberRenderable extends Renderable {
 
   public clearTarget(): void {
     if (this.target) {
+      this.target.off("line-info-change", this.handleLineInfoChange)
       super.remove(this.target.id)
       this.target = null
     }
@@ -431,7 +617,7 @@ export class LineNumberRenderable extends Renderable {
       if (visualLineIndex >= sources.length) break
 
       const logicalLine = sources[visualLineIndex]
-      const lineBg = this._lineColors.get(logicalLine)
+      const lineBg = this._lineColorsContent.get(logicalLine)
 
       if (lineBg) {
         // Fill from after gutter to the end of the LineNumberRenderable
@@ -457,50 +643,87 @@ export class LineNumberRenderable extends Renderable {
     return this.gutter?.visible ?? false
   }
 
-  /**
+/**
    * Sets a background color for a specific line (0-indexed).
    *
    * @param line - The line index (0-based)
-   * @param color - The background color to apply
+   * @param color - The background color to apply, or a {@link LineColorConfig} for separate gutter/content colors
    *
    * @remarks
    * The background color extends across the full width of the LineNumberRenderable,
-   * including both the gutter and content areas.
+   * including both the gutter and content areas. When a simple color is provided,
+   * the content area uses a slightly darker version. Use {@link LineColorConfig}
+   * for precise control over gutter and content colors.
+   *
+   * @public
    */
-  public setLineColor(line: number, color: string | RGBA): void {
-    const parsedColor = parseColor(color)
-    this._lineColors.set(line, parsedColor)
+  public setLineColor(line: number, color: string | RGBA | LineColorConfig): void {
+    this.parseLineColor(line, color)
+    // Update gutter if it exists
+    if (this.gutter) {
+      this.gutter.setLineColors(this._lineColorsGutter, this._lineColorsContent)
+    }
   }
 
   /**
    * Removes the background color from a specific line.
    *
    * @param line - The line index (0-based)
+   *
+   * @public
    */
   public clearLineColor(line: number): void {
-    this._lineColors.delete(line)
+    this._lineColorsGutter.delete(line)
+    this._lineColorsContent.delete(line)
+    if (this.gutter) {
+      this.gutter.setLineColors(this._lineColorsGutter, this._lineColorsContent)
+    }
   }
 
-  /** Clears all custom line background colors. */
+  /**
+   * Clears all custom line background colors.
+   *
+   * @public
+   */
   public clearAllLineColors(): void {
-    this._lineColors.clear()
+    this._lineColorsGutter.clear()
+    this._lineColorsContent.clear()
+    if (this.gutter) {
+      this.gutter.setLineColors(this._lineColorsGutter, this._lineColorsContent)
+    }
   }
 
   /**
    * Sets multiple line colors at once, replacing existing ones.
    *
-   * @param lineColors - Map of line indices to colors
+   * @param lineColors - Map of line indices to colors or {@link LineColorConfig} objects
+   *
+   * @public
    */
-  public setLineColors(lineColors: Map<number, string | RGBA>): void {
-    this._lineColors.clear()
+  public setLineColors(lineColors: Map<number, string | RGBA | LineColorConfig>): void {
+    this._lineColorsGutter.clear()
+    this._lineColorsContent.clear()
     for (const [line, color] of lineColors) {
-      this._lineColors.set(line, parseColor(color))
+      this.parseLineColor(line, color)
+    }
+    // Update gutter once after all colors are set
+    if (this.gutter) {
+      this.gutter.setLineColors(this._lineColorsGutter, this._lineColorsContent)
     }
   }
 
-  /** Gets the current map of line colors. */
-  public getLineColors(): Map<number, RGBA> {
-    return this._lineColors
+  /**
+   * Gets the current maps of line colors.
+   *
+   * @returns An object containing separate maps for gutter and content colors
+   *
+   * @public
+   */
+  public getLineColors(): { gutter: Map<number, RGBA>; content: Map<number, RGBA> } {
+    return {
+      gutter: this._lineColorsGutter,
+      content: this._lineColorsContent,
+    }
   }
 
   /**
@@ -563,5 +786,43 @@ export class LineNumberRenderable extends Renderable {
   /** Gets the current map of line signs. */
   public getLineSigns(): Map<number, LineSign> {
     return this._lineSigns
+  }
+
+  public set lineNumberOffset(value: number) {
+    if (this._lineNumberOffset !== value) {
+      this._lineNumberOffset = value
+      if (this.gutter) {
+        // Update the gutter's offset using its setter
+        this.gutter.setLineNumberOffset(value)
+      }
+    }
+  }
+
+  public get lineNumberOffset(): number {
+    return this._lineNumberOffset
+  }
+
+  public setHideLineNumbers(hideLineNumbers: Set<number>): void {
+    this._hideLineNumbers = hideLineNumbers
+    if (this.gutter) {
+      // Update the gutter's hideLineNumbers using its setter
+      this.gutter.setHideLineNumbers(hideLineNumbers)
+    }
+  }
+
+  public getHideLineNumbers(): Set<number> {
+    return this._hideLineNumbers
+  }
+
+  public setLineNumbers(lineNumbers: Map<number, number>): void {
+    this._lineNumbers = lineNumbers
+    if (this.gutter) {
+      // Update the gutter's lineNumbers using its setter
+      this.gutter.setLineNumbers(lineNumbers)
+    }
+  }
+
+  public getLineNumbers(): Map<number, number> {
+    return this._lineNumbers
   }
 }

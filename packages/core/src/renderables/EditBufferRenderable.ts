@@ -241,6 +241,7 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
     this.editBuffer.on("content-changed", () => {
       this.yogaNode.markDirty()
       this.requestRender()
+      this.emit("line-info-change")
       if (this._contentChangeListener) {
         this._contentChangeListener({})
       }
@@ -249,6 +250,10 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
 
   public get lineCount(): number {
     return this.editBuffer.getLineCount()
+  }
+
+  public get virtualLineCount(): number {
+    return this.editorView.getVirtualLineCount()
   }
 
   public get scrollY(): number {
@@ -585,13 +590,24 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
     }
   }
 
-  destroy(): void {
+  override destroy(): void {
+    if (this.isDestroyed) return
+
     if (this._focused) {
       this._ctx.setCursorPosition(0, 0, false)
+      // Manually blur to unhook event handlers BEFORE setting destroyed flag
+      // This prevents the guard in super.destroy() from skipping blur()
+      this.blur()
     }
-    super.destroy()
+
+    // Destroy dependent resources in correct order BEFORE calling super
+    // EditorView depends on EditBuffer, so destroy it first
     this.editorView.destroy()
     this.editBuffer.destroy()
+
+    // Finally clean up parent resources
+    // Note: super.destroy() will try to blur() again, but blur() has guards to prevent double-blur
+    super.destroy()
   }
 
   public set onCursorChange(handler: ((event: CursorChangeEvent) => void) | undefined) {
@@ -649,14 +665,37 @@ export abstract class EditBufferRenderable extends Renderable implements LineInf
   }
 
   /**
-   * Sets the entire text content.
+   * Sets the entire text content and resets buffer state.
+   *
+   * @remarks
+   * This method clears the undo history and resets the add_buffer.
+   * Use this for initial text setting or when you want a clean slate.
+   * For undoable text replacement, use {@link replaceText} instead.
    *
    * @param text - The new text content
-   * @param opts - Options controlling undo history
-   * @param opts.history - If true, adds to undo history; if false, replaces without history. @defaultValue true
+   *
+   * @public
    */
-  public setText(text: string, opts?: { history?: boolean }): void {
-    this.editBuffer.setText(text, opts)
+  public setText(text: string): void {
+    this.editBuffer.setText(text)
+    this.yogaNode.markDirty()
+    this.requestRender()
+  }
+
+  /**
+   * Replaces text while preserving undo history.
+   *
+   * @remarks
+   * This method creates an undo point, allowing the operation to be undone.
+   * Use this when you want the text replacement to be undoable.
+   * For a complete reset without history, use {@link setText} instead.
+   *
+   * @param text - The new text content
+   *
+   * @public
+   */
+  public replaceText(text: string): void {
+    this.editBuffer.replaceText(text)
     this.yogaNode.markDirty()
     this.requestRender()
   }

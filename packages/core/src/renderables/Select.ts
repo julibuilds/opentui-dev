@@ -4,6 +4,15 @@ import type { KeyEvent } from "../lib/KeyHandler"
 import { RGBA, parseColor, type ColorInput } from "../lib/RGBA"
 import { Renderable, type RenderableOptions } from "../Renderable"
 import type { RenderContext } from "../types"
+import {
+  type KeyBinding as BaseKeyBinding,
+  mergeKeyBindings,
+  getKeyBindingKey,
+  buildKeyBindingsMap,
+  type KeyAliasMap,
+  defaultKeyAliases,
+  mergeKeyAliases,
+} from "../lib/keymapping"
 
 /**
  * An option item for {@link SelectRenderable}.
@@ -18,6 +27,31 @@ export interface SelectOption {
   /** Optional value associated with the option */
   value?: any
 }
+
+/**
+ * Action types for Select keyboard navigation.
+ *
+ * @public
+ */
+export type SelectAction = "move-up" | "move-down" | "move-up-fast" | "move-down-fast" | "select-current"
+
+/**
+ * Key binding configuration for Select navigation.
+ *
+ * @public
+ */
+export type SelectKeyBinding = BaseKeyBinding<SelectAction>
+
+const defaultSelectKeybindings: SelectKeyBinding[] = [
+  { name: "up", action: "move-up" },
+  { name: "k", action: "move-up" },
+  { name: "down", action: "move-down" },
+  { name: "j", action: "move-down" },
+  { name: "up", shift: true, action: "move-up-fast" },
+  { name: "down", shift: true, action: "move-down-fast" },
+  { name: "return", action: "select-current" },
+  { name: "linefeed", action: "select-current" },
+]
 
 /**
  * Configuration options for {@link SelectRenderable}.
@@ -57,6 +91,8 @@ export interface SelectRenderableOptions extends RenderableOptions<SelectRendera
   itemSpacing?: number
   /** Number of items to skip when Shift is held */
   fastScrollStep?: number
+  keyBindings?: SelectKeyBinding[]
+  keyAliasMap?: KeyAliasMap
 }
 
 /**
@@ -131,6 +167,9 @@ export class SelectRenderable extends Renderable {
   private linesPerItem: number
   private fontHeight: number
   private _fastScrollStep: number
+  private _keyBindingsMap: Map<string, SelectAction>
+  private _keyAliasMap: KeyAliasMap
+  private _keyBindings: SelectKeyBinding[]
 
   protected _defaultOptions = {
     backgroundColor: "transparent",
@@ -188,6 +227,11 @@ export class SelectRenderable extends Renderable {
       options.selectedDescriptionColor || this._defaultOptions.selectedDescriptionColor,
     )
     this._fastScrollStep = options.fastScrollStep || this._defaultOptions.fastScrollStep
+
+    this._keyAliasMap = mergeKeyAliases(defaultKeyAliases, options.keyAliasMap || {})
+    this._keyBindings = options.keyBindings || []
+    const mergedBindings = mergeKeyBindings(defaultSelectKeybindings, this._keyBindings)
+    this._keyBindingsMap = buildKeyBindingsMap(mergedBindings, this._keyAliasMap)
 
     this.requestRender() // Initial render needed
   }
@@ -364,23 +408,36 @@ export class SelectRenderable extends Renderable {
     this.requestRender()
   }
 
-  public handleKeyPress(key: KeyEvent | string): boolean {
-    const keyName = typeof key === "string" ? key : key.name
-    const isShift = typeof key !== "string" && key.shift
+  public handleKeyPress(key: KeyEvent): boolean {
+    const bindingKey = getKeyBindingKey({
+      name: key.name,
+      ctrl: key.ctrl,
+      shift: key.shift,
+      meta: key.meta,
+      super: key.super,
+      action: "move-up" as SelectAction,
+    })
 
-    switch (keyName) {
-      case "up":
-      case "k":
-        this.moveUp(isShift ? this._fastScrollStep : 1)
-        return true
-      case "down":
-      case "j":
-        this.moveDown(isShift ? this._fastScrollStep : 1)
-        return true
-      case "return":
-      case "linefeed":
-        this.selectCurrent()
-        return true
+    const action = this._keyBindingsMap.get(bindingKey)
+
+    if (action) {
+      switch (action) {
+        case "move-up":
+          this.moveUp(1)
+          return true
+        case "move-down":
+          this.moveDown(1)
+          return true
+        case "move-up-fast":
+          this.moveUp(this._fastScrollStep)
+          return true
+        case "move-down-fast":
+          this.moveDown(this._fastScrollStep)
+          return true
+        case "select-current":
+          this.selectCurrent()
+          return true
+      }
     }
 
     return false
@@ -522,6 +579,18 @@ export class SelectRenderable extends Renderable {
 
   public set fastScrollStep(step: number) {
     this._fastScrollStep = step
+  }
+
+  public set keyBindings(bindings: SelectKeyBinding[]) {
+    this._keyBindings = bindings
+    const mergedBindings = mergeKeyBindings(defaultSelectKeybindings, bindings)
+    this._keyBindingsMap = buildKeyBindingsMap(mergedBindings, this._keyAliasMap)
+  }
+
+  public set keyAliasMap(aliases: KeyAliasMap) {
+    this._keyAliasMap = mergeKeyAliases(defaultKeyAliases, aliases)
+    const mergedBindings = mergeKeyBindings(defaultSelectKeybindings, this._keyBindings)
+    this._keyBindingsMap = buildKeyBindingsMap(mergedBindings, this._keyAliasMap)
   }
 
   public set selectedIndex(value: number) {

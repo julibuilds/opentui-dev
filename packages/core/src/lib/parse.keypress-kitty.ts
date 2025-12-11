@@ -140,7 +140,126 @@ function fromKittyMods(mod: number): {
   }
 }
 
+// Map functional key CSI codes to key names
+const functionalKeyMap: Record<string, string> = {
+  A: "up",
+  B: "down",
+  C: "right",
+  D: "left",
+  H: "home",
+  F: "end",
+  P: "f1",
+  Q: "f2",
+  R: "f3",
+  S: "f4",
+}
+
+// Map tilde key numbers to key names (CSI number ~ format)
+const tildeKeyMap: Record<string, string> = {
+  "1": "home",
+  "2": "insert",
+  "3": "delete",
+  "4": "end",
+  "5": "pageup",
+  "6": "pagedown",
+  "7": "home", // rxvt
+  "8": "end", // rxvt
+  "11": "f1",
+  "12": "f2",
+  "13": "f3",
+  "14": "f4",
+  "15": "f5",
+  "17": "f6",
+  "18": "f7",
+  "19": "f8",
+  "20": "f9",
+  "21": "f10",
+  "23": "f11",
+  "24": "f12",
+}
+
+/**
+ * Parse Kitty keyboard protocol special keys (functional and tilde) with event type
+ * Formats:
+ *   Functional: CSI 1;modifiers:event_type LETTER (e.g., \x1b[1;1:1A = up arrow press)
+ *   Tilde: CSI number;modifiers:event_type ~ (e.g., \x1b[5;1:1~ = pageup press)
+ */
+function parseKittySpecialKey(sequence: string): ParsedKey | null {
+  // Combined regex: matches both functional keys (letter) and tilde keys (~)
+  const specialKeyRe = /^\x1b\[(\d+);(\d+):(\d+)([A-Z~])$/
+  const match = specialKeyRe.exec(sequence)
+
+  if (!match) return null
+
+  const keyNumOrOne = match[1]
+  const modifierStr = match[2]
+  const eventTypeStr = match[3]
+  const terminator = match[4]
+
+  // Determine key name based on terminator
+  let keyName: string | undefined
+  if (terminator === "~") {
+    // Tilde key: lookup by number
+    keyName = tildeKeyMap[keyNumOrOne]
+  } else {
+    // Functional key: must have "1" as first param, lookup by letter
+    if (keyNumOrOne !== "1") return null
+    keyName = functionalKeyMap[terminator]
+  }
+
+  if (!keyName) return null
+
+  const key: ParsedKey = {
+    name: keyName,
+    ctrl: false,
+    meta: false,
+    shift: false,
+    option: false,
+    number: false,
+    sequence,
+    raw: sequence,
+    eventType: "press",
+    source: "kitty",
+    super: false,
+    hyper: false,
+    capsLock: false,
+    numLock: false,
+  }
+
+  // Parse modifiers
+  if (modifierStr) {
+    const modifierMask = parseInt(modifierStr, 10)
+    if (!isNaN(modifierMask) && modifierMask > 1) {
+      const mods = fromKittyMods(modifierMask - 1)
+      key.shift = mods.shift
+      key.ctrl = mods.ctrl
+      key.meta = mods.alt || mods.meta
+      key.option = mods.alt
+      key.super = mods.super
+      key.hyper = mods.hyper
+      key.capsLock = mods.capsLock
+      key.numLock = mods.numLock
+    }
+  }
+
+  // Parse event type: 1 = press, 2 = repeat, 3 = release
+  if (eventTypeStr === "1" || !eventTypeStr) {
+    key.eventType = "press"
+  } else if (eventTypeStr === "2") {
+    key.eventType = "press"
+    key.repeated = true
+  } else if (eventTypeStr === "3") {
+    key.eventType = "release"
+  }
+
+  return key
+}
+
 export function parseKittyKeyboard(sequence: string): ParsedKey | null {
+  // Try special key format (functional letters or tilde keys with event type)
+  const specialResult = parseKittySpecialKey(sequence)
+  if (specialResult) return specialResult
+
   // Kitty keyboard protocol: CSI unicode-key-code:alternate-key-codes ; modifiers:event-type ; text-as-codepoints u
   const kittyRe = /^\x1b\[([^\x1b]+)u$/
   const match = kittyRe.exec(sequence)
@@ -240,7 +359,8 @@ export function parseKittyKeyboard(sequence: string): ParsedKey | null {
     if (eventTypeStr === "1" || !eventTypeStr) {
       key.eventType = "press"
     } else if (eventTypeStr === "2") {
-      key.eventType = "repeat"
+      key.eventType = "press"
+      key.repeated = true
     } else if (eventTypeStr === "3") {
       key.eventType = "release"
     } else {
