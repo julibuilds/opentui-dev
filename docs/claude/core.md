@@ -911,7 +911,7 @@ new LinearScrollAccel()
 
 A renderable that displays line numbers in a gutter next to text content.
 
-LineNumberRenderable wraps a target renderable (typically a Code or EditBufferRenderable)
+LineNumberRenderable wraps a target renderable (typically a `Code` or `EditBufferRenderable`)
 and displays line numbers alongside it. Features include:
 
 - Automatic width adjustment based on line count
@@ -1813,7 +1813,7 @@ new TerminalPalette(stdin: ReadStream, stdout: WriteStream, writeFn?: WriteFunct
 
 A multi-line text input component with comprehensive editing capabilities.
 
-TextareaRenderable extends EditBufferRenderable to provide a fully-featured
+TextareaRenderable extends `EditBufferRenderable` to provide a fully-featured
 multi-line text editor with the following features:
 - Multi-line text editing with word wrapping
 - Comprehensive keyboard navigation (arrows, home/end, word jumping)
@@ -2736,6 +2736,16 @@ interface TimelineOptions {
 ## Input
 
 Keyboard, mouse, and input handling
+
+### ConsoleKeyBinding
+
+Key binding configuration for console actions.
+
+```typescript
+type ConsoleKeyBinding = BaseKeyBinding<ConsoleAction>
+```
+
+---
 
 ### InputAction
 
@@ -4104,6 +4114,29 @@ Configuration options for CodeRenderable.
 
 ---
 
+### ConsoleAction
+
+Available actions for console keyboard bindings.
+
+```typescript
+type ConsoleAction = "scroll-up" \| "scroll-down" \| "scroll-to-top" \| "scroll-to-bottom" \| "position-previous" \| "position-next" \| "size-increase" \| "size-decrease" \| "save-logs" \| "copy-selection"
+```
+
+| Value | Description |
+|-------|-------------|
+| `"scroll-up"` | - |
+| `"scroll-down"` | - |
+| `"scroll-to-top"` | - |
+| `"scroll-to-bottom"` | - |
+| `"position-previous"` | - |
+| `"position-next"` | - |
+| `"size-increase"` | - |
+| `"size-decrease"` | - |
+| `"save-logs"` | - |
+| `"copy-selection"` | - |
+
+---
+
 ### ConsoleOptions
 
 **Options** (ConsoleOptions)
@@ -4116,10 +4149,15 @@ Configuration options for CodeRenderable.
 | `colorError?` | `ColorInput` |  |
 | `colorInfo?` | `ColorInput` |  |
 | `colorWarn?` | `ColorInput` |  |
+| `copyButtonColor?` | `ColorInput` | Color for the copy button |
 | `cursorColor?` | `ColorInput` |  |
+| `keyAliasMap?` | `KeyAliasMap` | Key alias map for normalizing key names |
+| `keyBindings?` | `ConsoleKeyBinding[]` | Custom key bindings for console actions |
 | `maxDisplayLines?` | `number` |  |
 | `maxStoredLogs?` | `number` |  |
+| `onCopySelection?` | `(text: string) => void` | Callback invoked when text is copied from the console selection |
 | `position?` | `ConsolePosition` |  |
+| `selectionColor?` | `ColorInput` | Color for text selection highlight |
 | `sizePercent?` | `number` |  |
 | `startInDebugMode?` | `boolean` |  |
 | `title?` | `string` |  |
