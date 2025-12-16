@@ -1,0 +1,23 @@
+[**@opentui/core**](../README.md)
+
+***
+
+[@opentui/core](../README.md) / Text
+
+# Function: Text()
+
+> **Text**(`props?`, ...`children?`): [`ProxiedVNode`](../type-aliases/ProxiedVNode.md)\<*typeof* [`TextRenderable`](../classes/TextRenderable.md)\>
+
+## Parameters
+
+### props?
+
+[`TextOptions`](../interfaces/TextOptions.md) & `object`
+
+### children?
+
+[`VChild`](../type-aliases/VChild.md)[] | [`TextNodeRenderable`](../classes/TextNodeRenderable.md)[]
+
+## Returns
+
+[`ProxiedVNode`](../type-aliases/ProxiedVNode.md)\<*typeof* [`TextRenderable`](../classes/TextRenderable.md)\>
