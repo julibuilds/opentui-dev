@@ -15,8 +15,8 @@ git merge upstream/main --no-commit --no-ff
 ### 2. Remove Excluded Directories
 If present in merge, remove:
 ```bash
-git rm -rf packages/solid packages/vue packages/go scripts 2>/dev/null || true
-rm -rf packages/solid packages/vue packages/go scripts
+git rm -rf packages/solid packages/vue packages/go scripts .github 2>/dev/null || true
+rm -rf packages/solid packages/vue packages/go scripts .github
 ```
 
 ### 3. Handle Simple Conflicts
@@ -104,7 +104,7 @@ Preserved all TSDoc additions while incorporating upstream fixes.
 
 [List key changes]
 
-Excluded packages/solid, packages/vue, packages/go, and scripts/ as they are not managed in this fork."
+Excluded packages/solid, packages/vue, packages/go, scripts/, and .github/ as they are not managed in this fork."
 ```
 
 ## Key Rules
@@ -112,7 +112,7 @@ Excluded packages/solid, packages/vue, packages/go, and scripts/ as they are not
 - **Never lose TSDoc** - Our documentation is the value-add of this fork
 - **Accept upstream APIs** - Their code changes are authoritative
 - **Document new exports** - Any new `export` needs `@public` and description
-- **Exclude non-managed directories** - solid, vue, go, scripts are upstream-only
+- **Exclude non-managed directories** - solid, vue, go, scripts, .github are upstream-only
 - **Never amend merge commits** - Amending loses the second parent and breaks GitHub's "behind" tracking
 
 ## Conflict Resolution Priority
