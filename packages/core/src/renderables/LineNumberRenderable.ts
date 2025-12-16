@@ -371,7 +371,7 @@ function darkenColor(color: RGBA): RGBA {
  * A renderable that displays line numbers in a gutter next to text content.
  *
  * @remarks
- * LineNumberRenderable wraps a target renderable (typically a {@link Code} or {@link EditBufferRenderable})
+ * LineNumberRenderable wraps a target renderable (typically a `Code` or `EditBufferRenderable`)
  * and displays line numbers alongside it. Features include:
  *
  * - Automatic width adjustment based on line count

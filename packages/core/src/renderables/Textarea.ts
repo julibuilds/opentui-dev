@@ -159,7 +159,7 @@ export interface TextareaOptions extends EditBufferOptions {
  * A multi-line text input component with comprehensive editing capabilities.
  *
  * @remarks
- * TextareaRenderable extends {@link EditBufferRenderable} to provide a fully-featured
+ * TextareaRenderable extends `EditBufferRenderable` to provide a fully-featured
  * multi-line text editor with the following features:
  * - Multi-line text editing with word wrapping
  * - Comprehensive keyboard navigation (arrows, home/end, word jumping)

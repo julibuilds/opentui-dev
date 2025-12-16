@@ -62,3 +62,32 @@ export function buildKeyBindingsMap<Action extends string>(
 
   return map
 }
+
+/**
+ * Converts a key binding to a human-readable string representation.
+ *
+ * @param binding - The key binding to stringify
+ * @returns A string like "ctrl+shift+y" or just "escape"
+ *
+ * @example
+ * ```typescript
+ * keyBindingToString({ name: "y", ctrl: true, shift: true }) // "ctrl+shift+y"
+ * keyBindingToString({ name: "escape" }) // "escape"
+ * keyBindingToString({ name: "c", ctrl: true }) // "ctrl+c"
+ * keyBindingToString({ name: "s", super: true }) // "super+s"
+ * ```
+ *
+ * @public
+ */
+export function keyBindingToString<Action extends string>(binding: KeyBinding<Action>): string {
+  const parts: string[] = []
+
+  if (binding.ctrl) parts.push("ctrl")
+  if (binding.shift) parts.push("shift")
+  if (binding.meta) parts.push("meta")
+  if (binding.super) parts.push("super")
+
+  parts.push(binding.name)
+
+  return parts.join("+")
+}

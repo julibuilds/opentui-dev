@@ -451,6 +451,7 @@ export class CliRenderer extends EventEmitter implements RenderContext {
   private animationRequest: Map<number, FrameRequestCallback> = new Map()
 
   private resizeTimeoutId: ReturnType<typeof setTimeout> | null = null
+  private capabilityTimeoutId: ReturnType<typeof setTimeout> | null = null
   private resizeDebounceDelay: number = 100
 
   private enableMouseMovement: boolean = false
@@ -1033,7 +1034,8 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     this.lib.setupTerminal(this.rendererPtr, this._useAlternateScreen)
     this._capabilities = this.lib.getTerminalCapabilities(this.rendererPtr)
 
-    setTimeout(() => {
+    this.capabilityTimeoutId = setTimeout(() => {
+      this.capabilityTimeoutId = null
       this.removeInputHandler(this.capabilityHandler)
     }, 5000)
 
@@ -1150,6 +1152,20 @@ export class CliRenderer extends EventEmitter implements RenderContext {
 
       this._latestPointer.x = mouseEvent.x
       this._latestPointer.y = mouseEvent.y
+
+      if (this._console.visible) {
+        const consoleBounds = this._console.bounds
+        if (
+          mouseEvent.x >= consoleBounds.x &&
+          mouseEvent.x < consoleBounds.x + consoleBounds.width &&
+          mouseEvent.y >= consoleBounds.y &&
+          mouseEvent.y < consoleBounds.y + consoleBounds.height
+        ) {
+          const event = new MouseEvent(null, mouseEvent)
+          const handled = this._console.handleMouse(event)
+          if (handled) return true
+        }
+      }
 
       if (mouseEvent.type === "scroll") {
         const maybeRenderableId = this.lib.checkHit(this.rendererPtr, mouseEvent.x, mouseEvent.y)
@@ -1743,7 +1759,19 @@ export class CliRenderer extends EventEmitter implements RenderContext {
     process.removeListener("uncaughtException", this.handleError)
     process.removeListener("unhandledRejection", this.handleError)
     process.removeListener("warning", this.warningHandler)
+    process.removeListener("beforeExit", this.exitHandler)
     capture.removeListener("write", this.captureCallback)
+    this.removeExitListeners()
+
+    if (this.resizeTimeoutId !== null) {
+      clearTimeout(this.resizeTimeoutId)
+      this.resizeTimeoutId = null
+    }
+
+    if (this.capabilityTimeoutId !== null) {
+      clearTimeout(this.capabilityTimeoutId)
+      this.capabilityTimeoutId = null
+    }
 
     if (this.memorySnapshotTimer) {
       clearInterval(this.memorySnapshotTimer)
